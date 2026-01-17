@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   },
   devIndicators: false, // Hide the "N" badge in dev mode
   // Uncomment and set your repo name if deploying to github.io/repo-name
-  // basePath: '/your-repo-name',
+  basePath: "/SKF-FEETRACK",
 };
 
 export default nextConfig;
