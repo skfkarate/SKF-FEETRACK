@@ -36,7 +36,7 @@ Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpattern
     
     .header {
       background: linear-gradient(135deg, #1a1f2e, #0f1419);
-      padding: 24px;
+      padding: 30px;
       text-align: center;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
@@ -54,21 +54,21 @@ Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpattern
     
     .header h1 {
       color: white;
-      font-size: 28px;
+      font-size: 36px;
       font-weight: 900;
       letter-spacing: 0.2em;
     }
     
     .header p {
       color: #d4af37;
-      font-size: 10px;
+      font-size: 14px;
       font-weight: 600;
       letter-spacing: 0.1em;
-      margin-top: 4px;
+      margin-top: 8px;
     }
     
     .section {
-      padding: 20px 24px;
+      padding: 24px 32px;
       border-bottom: 1px solid #e5e7eb;
     }
     
@@ -83,20 +83,20 @@ Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpattern
     
     .title h2 {
       color: #1a1f2e;
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 900;
     }
     
     .title p {
       color: #6b7280;
-      font-size: 10px;
+      font-size: 14px;
       margin-top: 4px;
     }
     
     .row {
       display: table;
       width: 100%;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
     
     .row:last-child {
@@ -107,19 +107,19 @@ Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpattern
       display: table-cell;
       color: #4b5563;
       font-weight: 700;
-      font-size: 10px;
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       width: 40%;
       vertical-align: middle;
-      padding-right: 12px;
+      padding-right: 16px;
     }
     
     .value {
       display: table-cell;
       color: #1a1f2e;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 16px;
       text-align: right;
       width: 60%;
       vertical-align: middle;
@@ -148,23 +148,23 @@ Read more: https://nextjs.org/docs/messages/next-image-unconfigured-localpattern
     }
     
     .amount-box .amount {
-      font-size: 24px;
+      font-size: 32px;
       font-weight: 900;
       color: #1a1f2e;
     }
     
     .amount-box .words {
-      font-size: 10px;
+      font-size: 14px;
       font-style: italic;
       color: #6b7280;
-      margin-top: 4px;
+      margin-top: 8px;
     }
     
     .status {
-      margin-top: 16px;
+      margin-top: 24px;
       text-align: center;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 16px;
       color: #16a34a;
     }
     
