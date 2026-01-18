@@ -164,17 +164,17 @@ export default function MessagesPage() {
     }
   }, [selectedBranch, selectedMonth, user, selectAllPending]);
 
-  // Filter pending students - Strict check
-  // Must be MonthStatus="Pending" AND Status="Active"
-  // Explicitly exclude "Break", "Discontinued", "Paid"
+  // Filter pending students - STRICT FILTER
+  // ONLY show students where monthStatus is EXACTLY "Pending"
+  // This automatically excludes: Paid, Break, Discontinued, N/A, or any other value
   const pendingStudents = useMemo(
     () =>
       students.filter((s) => {
-        const isPending = s.monthStatus === "Pending";
-        const isActive = s.status === "Active";
-        const isNotBreak = s.monthStatus !== "Break";
-        const isNotDiscontinued = s.monthStatus !== "Discontinued";
-        return isPending && isActive && isNotBreak && isNotDiscontinued;
+        // Must have monthStatus exactly "Pending"
+        if (s.monthStatus !== "Pending") return false;
+        // Must have status exactly "Active" (not Discontinued, Break, etc.)
+        if (s.status !== "Active") return false;
+        return true;
       }),
     [students],
   );

@@ -655,14 +655,16 @@ function markStudentDiscontinued(studentId, branch, month) {
   const monthCol = CONFIG.monthStart + 1 + month;
   feesSheet.getRange(studentRow, monthCol).setValue("Discontinued");
 
-  // 2. Update EndMonth in DB sheet
+  // 2. Update Status AND EndMonth in DB sheet
   const dbData = dbSheet.getDataRange().getValues();
   let dbRow = -1;
 
   for (let i = 1; i < dbData.length; i++) {
     if (String(dbData[i][0]).trim() === studentId) {
       dbRow = i + 1;
-      // Column index 11 is EndMonth (1-based index for getRange)
+      // Column 4 is Status (1-based index for getRange)
+      dbSheet.getRange(dbRow, 4).setValue("Discontinued");
+      // Column 11 is EndMonth (1-based index for getRange)
       dbSheet.getRange(dbRow, 11).setValue(month);
       break;
     }
