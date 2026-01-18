@@ -1,0 +1,23 @@
+{
+  "name": "SKF Karate Fee Tracker",
+  "short_name": "SKF Fees",
+  "description": "Fee Management System for SKF Karate",
+  "start_url": "https://skfkarate.github.io/SKF-FEETRACK/",
+  "scope": "https://skfkarate.github.io/SKF-FEETRACK/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://skfkarate.github.io/SKF-FEETRACK/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://skfkarate.github.io/SKF-FEETRACK/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

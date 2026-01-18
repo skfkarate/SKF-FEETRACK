@@ -183,6 +183,9 @@ export default function StudentList({ branch }: { branch: string }) {
             : s,
         ),
       );
+
+      // Auto-show receipt
+      setReceiptStudent(confirmStudent);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to mark as paid");
     } finally {
@@ -502,18 +505,19 @@ export default function StudentList({ branch }: { branch: string }) {
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <p className="text-gray-400">₹{student.fee}</p>
-                          {student.creditApplied &&
-                            student.creditApplied > 0 && (
-                              <span className="flex items-center gap-1 text-[10px] bg-purple-900/50 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/30">
-                                <Gift className="w-3 h-3" />
-                                -₹{student.creditApplied}
-                              </span>
-                            )}
+                          {(student.creditApplied || 0) > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] bg-purple-900/50 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/30">
+                              <Gift className="w-3 h-3" />
+                              -₹{student.creditApplied}
+                            </span>
+                          )}
                         </div>
                       </div>
                       {student.monthStatus === "Paid" ? (
                         <button
-                          onClick={() => setReceiptStudent(student)}
+                          onClick={() => {
+                            setReceiptStudent(student);
+                          }}
                           className="bg-green-600/20 text-green-500 px-4 py-2 font-[family-name:var(--font-oswald)] text-sm tracking-wider hover:bg-green-600/30 transition-colors cursor-pointer"
                         >
                           ✓ PAID
@@ -914,7 +918,9 @@ export default function StudentList({ branch }: { branch: string }) {
           student={receiptStudent}
           month={month}
           branch={branch}
-          onClose={() => setReceiptStudent(null)}
+          onClose={() => {
+            setReceiptStudent(null);
+          }}
         />
       )}
     </div>

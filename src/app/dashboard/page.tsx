@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Wallet } from "lucide-react";
+import { ArrowRight, Wallet, MessageSquare } from "lucide-react";
 
 const MONTHS = [
   "Jan",
@@ -60,7 +60,11 @@ export default function DashboardPage() {
       <header className="bg-[#1a1a1a] border-b border-[#333] px-4 py-4 sticky top-0 z-50">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="SKF" className="w-8 h-8 object-contain" />
+            <img
+              src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
+              alt="SKF"
+              className="w-8 h-8 object-contain"
+            />
             <h1 className="font-[family-name:var(--font-oswald)] text-xl font-bold tracking-wider">
               SKF <span className="text-red-600">KARATE</span>
             </h1>
@@ -213,6 +217,34 @@ export default function DashboardPage() {
             </p>
             <span
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 group-hover:text-purple-600 
+                             transition-colors text-2xl"
+            >
+              →
+            </span>
+          </Link>
+        </div>
+
+        {/* Message Center Section */}
+        <div className="mt-4">
+          <Link
+            href="/messages"
+            className="block bg-gradient-to-r from-[#1a1a2a] to-[#1a1a1a] border border-cyan-600/50 p-6 
+                       hover:border-cyan-500 hover:bg-[#202020] transition-all duration-200
+                       group relative overflow-hidden"
+          >
+            <div
+              className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 
+                            transform scale-y-0 group-hover:scale-y-100 transition-transform duration-200"
+            />
+            <h3 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider text-cyan-400 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              SEND REMINDERS
+            </h3>
+            <p className="text-gray-400 text-sm mt-1">
+              WhatsApp Fee Reminders to Students
+            </p>
+            <span
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 group-hover:text-cyan-400 
                              transition-colors text-2xl"
             >
               →

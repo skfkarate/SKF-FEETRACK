@@ -2,6 +2,8 @@
 
 import { Student } from "@/lib/api";
 import { useRef } from "react";
+import NextImage from "next/image";
+const BASE_PATH = "https://skfkarate.github.io/SKF-FEETRACK"; // Hardcoded absolute URL
 
 const MONTHS = [
   "Jan",
@@ -43,7 +45,9 @@ export default function MonthlyFeeReceipt({
     month: "long",
     year: "numeric",
   });
-  const purpose = "Monthly Training Fee";
+  const purpose = `${new Date(2026, month, 1).toLocaleDateString("en-IN", {
+    month: "long",
+  })} Monthly Training Fee`;
   const amountWords = `Rupees ${student.fee.toLocaleString()} Only`;
 
   // Use browser's native print for PERFECT visual match
@@ -68,7 +72,7 @@ export default function MonthlyFeeReceipt({
     }
     
     @page {
-      size: 110mm 175mm;
+      size: A4 portrait;
       margin: 0;
     }
     
@@ -77,52 +81,64 @@ export default function MonthlyFeeReceipt({
       background: white;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      height: 100vh;
+      display: flex;
+      align-items: center; /* Center vertically */
+      justify-content: center; /* Center horizontally */
     }
     
     .receipt {
-      width: 110mm;
-      height: 175mm;
+      width: 100%;
+      max-width: 210mm;
+      height: 297mm; /* Force full height */
       margin: 0 auto;
       background: white;
-      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between; /* Distribute vertical space */
     }
     
     .header {
       background: linear-gradient(135deg, #1a1f2e, #0f1419);
-      padding: 24px;
+      padding: 40px;
       text-align: center;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
     
     .logo {
-      width: 70px;
-      height: 70px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       object-fit: contain;
-      border: 1px solid rgba(212, 175, 55, 0.5);
+      border: 2px solid rgba(212, 175, 55, 0.5);
       background: rgba(255, 255, 255, 0.05);
-      margin-bottom: 12px;
+      margin-bottom: 20px;
     }
     
     .header h1 {
       color: white;
-      font-size: 28px;
+      font-size: 42px;
       font-weight: 900;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.25em;
     }
     
     .header p {
       color: #d4af37;
-      font-size: 10px;
+      font-size: 16px;
       font-weight: 600;
-      letter-spacing: 0.1em;
-      margin-top: 4px;
+      letter-spacing: 0.15em;
+      margin-top: 12px;
     }
     
     .section {
-      padding: 20px 24px;
+      padding: 32px 48px;
       border-bottom: 1px solid #e5e7eb;
+      flex: 1; /* Allow sections to grow */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     
     .section:last-of-type {
@@ -136,20 +152,20 @@ export default function MonthlyFeeReceipt({
     
     .title h2 {
       color: #1a1f2e;
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 900;
     }
     
     .title p {
       color: #6b7280;
-      font-size: 10px;
+      font-size: 14px;
       margin-top: 4px;
     }
     
     .row {
       display: table;
       width: 100%;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
     
     .row:last-child {
@@ -160,20 +176,21 @@ export default function MonthlyFeeReceipt({
       display: table-cell;
       color: #4b5563;
       font-weight: 700;
-      font-size: 10px;
+      font-size: 16px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      width: 50%;
+      width: 40%;
       vertical-align: middle;
+      padding-right: 20px;
     }
     
     .value {
       display: table-cell;
       color: #1a1f2e;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 20px;
       text-align: right;
-      width: 50%;
+      width: 60%;
       vertical-align: middle;
     }
     
@@ -200,23 +217,23 @@ export default function MonthlyFeeReceipt({
     }
     
     .amount-box .amount {
-      font-size: 24px;
+      font-size: 40px;
       font-weight: 900;
       color: #1a1f2e;
     }
     
     .amount-box .words {
-      font-size: 10px;
+      font-size: 16px;
       font-style: italic;
       color: #6b7280;
-      margin-top: 4px;
+      margin-top: 12px;
     }
     
     .status {
-      margin-top: 16px;
+      margin-top: 24px;
       text-align: center;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 16px;
       color: #16a34a;
     }
     
@@ -254,7 +271,7 @@ export default function MonthlyFeeReceipt({
 <body>
   <div class="receipt">
     <div class="header">
-      <img src="/logo.png" alt="SKF" class="logo">
+      <img src="${BASE_PATH}/logo.png" alt="SKF" class="logo">
       <h1>S K F</h1>
       <p>Sports Karate-do Fitness & Self Defence Association ®</p>
     </div>
@@ -282,7 +299,7 @@ export default function MonthlyFeeReceipt({
     <div class="section">
       <div class="row">
         <span class="label">Parent / Guardian</span>
-        <span class="value">N/A</span>
+        <span class="value">${student.parentName || "N/A"}</span>
       </div>
       <div class="row">
         <span class="label">Student Name</span>
@@ -304,7 +321,7 @@ export default function MonthlyFeeReceipt({
       <div class="status">✔ Payment Received with Thanks</div>
       
       <div class="stamp">
-        <img src="/stamp.png" alt="PAID">
+        <img src="${BASE_PATH}/stamp.png" alt="PAID">
       </div>
     </div>
     
@@ -378,17 +395,12 @@ export default function MonthlyFeeReceipt({
                 marginBottom: "12px",
               }}
             >
-              <img
-                src="/logo.png"
+              <NextImage
+                src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
                 alt="SKF"
-                style={{
-                  width: "70px",
-                  height: "70px",
-                  borderRadius: "50%",
-                  objectFit: "contain",
-                  border: "1px solid rgba(212, 175, 55, 0.5)",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                }}
+                width={70}
+                height={70}
+                className="rounded-full object-contain border border-[#d4af37]/50 bg-white/5"
               />
             </div>
             <h1
@@ -544,7 +556,7 @@ export default function MonthlyFeeReceipt({
                       verticalAlign: "middle",
                     }}
                   >
-                    N/A
+                    {student.parentName || "N/A"}
                   </td>
                 </tr>
                 <tr>
@@ -669,15 +681,12 @@ export default function MonthlyFeeReceipt({
                 opacity: 0.9,
               }}
             >
-              <img
-                src="/stamp.png"
+              <NextImage
+                src="https://skfkarate.github.io/SKF-FEETRACK/stamp.png"
                 alt="PAID"
-                style={{
-                  width: "96px",
-                  height: "96px",
-                  objectFit: "contain",
-                  transform: "rotate(-12deg)",
-                }}
+                width={96}
+                height={96}
+                className="object-contain -rotate-12"
               />
             </div>
           </div>
@@ -728,7 +737,7 @@ export default function MonthlyFeeReceipt({
               cursor: "pointer",
             }}
           >
-            🖨️ PRINT / SAVE PDF
+            ⬇ DOWNLOAD
           </button>
         </div>
       </div>

@@ -32,11 +32,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
-        <img
-          src="/logo.png"
-          alt="SKF Karate Logo"
-          className="w-32 h-32 mx-auto mb-6 object-contain"
-        />
+        <div className="relative w-32 h-32 mx-auto mb-6">
+          <img
+            src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
+            alt="SKF Karate Logo"
+            className="object-contain w-full h-full"
+          />
+        </div>
         <h1 className="font-[family-name:var(--font-oswald)] text-5xl font-bold tracking-widest mb-2">
           SKF <span className="text-red-600">KARATE</span>
         </h1>

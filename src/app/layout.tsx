@@ -15,6 +15,23 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   title: "SKF KARATE",
   description: "Fee Management System",
+  manifest: "/SKF-FEETRACK/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SKF Fees",
+  },
+  icons: {
+    apple: "https://skfkarate.github.io/SKF-FEETRACK/logo.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0a0a0a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevent zooming for "app-like" feel
 };
 
 export default function RootLayout({
