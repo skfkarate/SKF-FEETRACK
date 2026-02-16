@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Gift, Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import {
   getReferralCredits,
   addReferralCredit,
   getStudents,
   ReferralCreditsData,
-  ReferralCredit,
+
   Student,
 } from "@/lib/api";
 
@@ -153,21 +153,19 @@ export default function ReferralCreditsPage() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${
-              branch === "Herohalli"
+            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${branch === "Herohalli"
                 ? "bg-red-600 border-red-600 text-white"
                 : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
-            }`}
+              }`}
           >
             Herohalli
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${
-              branch === "MPSC"
+            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${branch === "MPSC"
                 ? "bg-red-600 border-red-600 text-white"
                 : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
-            }`}
+              }`}
           >
             MP Sports Club
           </button>
@@ -228,11 +226,10 @@ export default function ReferralCreditsPage() {
                     .map((credit) => (
                       <div
                         key={credit.id}
-                        className={`bg-[#1a1a1a] border p-4 ${
-                          credit.isUsed
+                        className={`bg-[#1a1a1a] border p-4 ${credit.isUsed
                             ? "border-[#333] opacity-60"
                             : "border-green-600/50"
-                        }`}
+                          }`}
                       >
                         <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                           {/* Row 1: From -> To */}
@@ -278,11 +275,10 @@ export default function ReferralCreditsPage() {
                               Credit Amount
                             </p>
                             <p
-                              className={`font-[family-name:var(--font-oswald)] text-xl ${
-                                credit.isUsed
+                              className={`font-[family-name:var(--font-oswald)] text-xl ${credit.isUsed
                                   ? "text-gray-500"
                                   : "text-green-400"
-                              }`}
+                                }`}
                             >
                               ₹{credit.amount.toLocaleString()}
                             </p>

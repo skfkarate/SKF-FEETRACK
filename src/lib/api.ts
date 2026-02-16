@@ -1,7 +1,7 @@
 // SKF Karate API - Connect to Google Sheets
 
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbw1liGOq7-6mWTfgw3QsoTKvHl7MIqzn96XPx43JwGcEciv2tP4hSedoemyt0f_ZXEYzw/exec"; // <-- PASTE YOUR SCRIPT URL HERE
+  "https://script.google.com/macros/s/AKfycbyV8zmUVUsY1vZRUoXEGhkeBzI-yLC_M36yLsC-leJHjwPOx8jqNYXa_au6mZ50mt36oQ/exec"; // <-- PASTE YOUR SCRIPT URL HERE
 
 interface StudentData {
   id: string;
@@ -48,7 +48,204 @@ export interface DashboardStats {
   pendingAmount: number;
 }
 
-const useMockData = () => !SCRIPT_URL;
+const isMockData = () => !SCRIPT_URL;
+
+// ============================================
+// FETCH HELPERS - Timeout & Retry
+// ============================================
+
+const DEFAULT_TIMEOUT = 15000; // 15 seconds (faster fail, smarter retry)
+const MAX_RETRIES = 2; // Reduced retries for faster perceived performance
+const INITIAL_RETRY_DELAY = 500; // 500ms
+
+/**
+ * Fetch with timeout support
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeout = DEFAULT_TIMEOUT
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Fetch with retry logic and exponential backoff
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  retries = MAX_RETRIES
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetchWithTimeout(url, options);
+
+      // If we get a response (even an error response), return it
+      if (response.ok || response.status < 500) {
+        return response;
+      }
+
+      // Server error - retry
+      throw new Error(`Server error: ${response.status}`);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on abort (timeout) or if it's the last attempt
+      if (attempt === retries) {
+        break;
+      }
+
+      // Exponential backoff
+      const delay = INITIAL_RETRY_DELAY * Math.pow(2, attempt);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError || new Error("Request failed after retries");
+}
+
+// ============================================
+// CACHE SYSTEM - Instant Repeat Loads
+// ============================================
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  isRefreshing: boolean;
+}
+
+// In-memory cache store
+const cache = new Map<string, CacheEntry<unknown>>();
+
+// Cache durations (in milliseconds)
+const CACHE_TTL = {
+  students: 2 * 60 * 1000,      // 2 minutes - changes frequently
+  financial: 5 * 60 * 1000,     // 5 minutes - moderate changes
+  devFund: 5 * 60 * 1000,       // 5 minutes
+  referrals: 5 * 60 * 1000,     // 5 minutes
+  branchCounts: 10 * 60 * 1000, // 10 minutes - rarely changes
+};
+
+// Stale duration - how long to serve stale data while refreshing
+const STALE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Get data from cache if available and fresh
+ */
+function getCached<T>(key: string): { data: T | null; isStale: boolean } {
+  const entry = cache.get(key) as CacheEntry<T> | undefined;
+
+  if (!entry) {
+    return { data: null, isStale: false };
+  }
+
+  const age = Date.now() - entry.timestamp;
+  const ttl = Object.values(CACHE_TTL).find(() => true) || CACHE_TTL.students;
+
+  if (age < ttl) {
+    // Fresh data
+    return { data: entry.data, isStale: false };
+  } else if (age < STALE_DURATION) {
+    // Stale but usable
+    return { data: entry.data, isStale: true };
+  }
+
+  // Too old, don't use
+  return { data: null, isStale: false };
+}
+
+/**
+ * Set cache entry
+ */
+function setCache<T>(key: string, data: T): void {
+  cache.set(key, {
+    data,
+    timestamp: Date.now(),
+    isRefreshing: false,
+  });
+}
+
+/**
+ * Mark cache entry as being refreshed (to prevent duplicate fetches)
+ */
+function markRefreshing(key: string): boolean {
+  const entry = cache.get(key);
+  if (entry?.isRefreshing) {
+    return false; // Already refreshing
+  }
+  if (entry) {
+    entry.isRefreshing = true;
+  }
+  return true;
+}
+
+/**
+ * Invalidate cache entries matching a pattern
+ */
+export function invalidateCache(pattern?: string): void {
+  if (!pattern) {
+    cache.clear();
+    return;
+  }
+
+  for (const key of cache.keys()) {
+    if (key.includes(pattern)) {
+      cache.delete(key);
+    }
+  }
+}
+
+/**
+ * Cached fetch wrapper with stale-while-revalidate
+ * Returns cached data instantly, refreshes in background if stale
+ */
+async function cachedFetch<T>(
+  cacheKey: string,
+  fetcher: () => Promise<T>,
+  onBackgroundUpdate?: (data: T) => void
+): Promise<T> {
+  const { data: cachedData, isStale } = getCached<T>(cacheKey);
+
+  // If we have cached data
+  if (cachedData !== null) {
+    // If stale, refresh in background
+    if (isStale && markRefreshing(cacheKey)) {
+      // Background refresh - don't await
+      fetcher()
+        .then((freshData) => {
+          setCache(cacheKey, freshData);
+          onBackgroundUpdate?.(freshData);
+        })
+        .catch(() => {
+          // Silent fail for background refresh
+          const entry = cache.get(cacheKey);
+          if (entry) entry.isRefreshing = false;
+        });
+    }
+
+    // Return cached data immediately
+    return cachedData;
+  }
+
+  // No cache, fetch fresh
+  const freshData = await fetcher();
+  setCache(cacheKey, freshData);
+  return freshData;
+}
 
 // ============================================
 // API FUNCTIONS
@@ -58,7 +255,7 @@ export async function getStudents(
   branch: string,
   month: number,
 ): Promise<Student[]> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 500));
     const allStudents = MOCK_STUDENTS[branch] || MOCK_STUDENTS["Herohalli"];
 
@@ -75,9 +272,9 @@ export async function getStudents(
         paidStatus[`${branch}-${month}-${s.id}`] ??
         (month === 0
           ? s.id.includes("001") ||
-            s.id.includes("002") ||
-            s.id.includes("005") ||
-            s.id.includes("007")
+          s.id.includes("002") ||
+          s.id.includes("005") ||
+          s.id.includes("007")
           : false),
       monthStatus: (paidStatus[`${branch}-${month}-${s.id}`]
         ? "Paid"
@@ -85,10 +282,14 @@ export async function getStudents(
     }));
   }
 
-  const response = await fetch(`${SCRIPT_URL}?branch=${branch}&month=${month}`);
-  const data = await response.json();
-  if (!data.success) throw new Error(data.error);
-  return data.students;
+  const cacheKey = `students:${branch}:${month}`;
+
+  return cachedFetch(cacheKey, async () => {
+    const response = await fetchWithRetry(`${SCRIPT_URL}?branch=${branch}&month=${month}`);
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "Failed to fetch students");
+    return data.students;
+  });
 }
 
 export async function markPaid(
@@ -96,18 +297,22 @@ export async function markPaid(
   branch: string,
   month: number,
 ): Promise<void> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     paidStatus[`${branch}-${month}-${id}`] = true;
     return;
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({ action: "mark_paid", id, branch, month }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to mark as paid");
+
+  // Invalidate student and financial caches
+  invalidateCache(`students:${branch}:${month}`);
+  invalidateCache(`financial:${branch}`);
 }
 
 export async function markBreak(
@@ -115,18 +320,18 @@ export async function markBreak(
   branch: string,
   month: number,
 ): Promise<void> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     // In mock mode, just simulate the action
     return;
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({ action: "mark_break", id, branch, month }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to mark as break");
 }
 
 export async function markDiscontinued(
@@ -134,18 +339,18 @@ export async function markDiscontinued(
   branch: string,
   month: number,
 ): Promise<void> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     // In mock mode, just simulate the action
     return;
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({ action: "mark_discontinued", id, branch, month }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to mark as discontinued");
 }
 
 export async function getDashboardStats(
@@ -178,7 +383,7 @@ export async function addStudent(
   phone: string,
   joinMonth: number,
 ): Promise<{ id: string }> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     const students = MOCK_STUDENTS[branch] || MOCK_STUDENTS["Herohalli"];
 
@@ -198,7 +403,7 @@ export async function addStudent(
     return { id: skfId };
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "add_student",
@@ -211,7 +416,7 @@ export async function addStudent(
     }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to add student");
   return data.data;
 }
 
@@ -219,7 +424,7 @@ export async function getBranchCounts(): Promise<{
   herohalli: number;
   mp: number;
 }> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 200));
     return {
       herohalli: MOCK_STUDENTS["Herohalli"].length,
@@ -227,13 +432,17 @@ export async function getBranchCounts(): Promise<{
     };
   }
 
-  const response = await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "get_branch_counts" }),
+  const cacheKey = 'branchCounts';
+
+  return cachedFetch(cacheKey, async () => {
+    const response = await fetchWithRetry(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "get_branch_counts" }),
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "Failed to get branch counts");
+    return data.data;
   });
-  const data = await response.json();
-  if (!data.success) throw new Error(data.error);
-  return data.data;
 }
 
 // ============================================
@@ -253,7 +462,9 @@ export interface DevExpense {
   id: string;
   month: number;
   year: string;
+  title: string;
   description: string;
+  scope: string; // "Herohalli" | "MPSC" | "Both" | custom string
   amount: number;
   dateAdded: string;
 }
@@ -284,55 +495,91 @@ const MOCK_DEV_FUND_DATA: DevelopmentFundData = {
   availableBalance: 0,
 };
 
-export async function getDevelopmentFundData(
-  branch: string,
-): Promise<DevelopmentFundData> {
-  if (useMockData()) {
+export async function getDevelopmentFundData(): Promise<DevelopmentFundData> {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
-    return { ...MOCK_DEV_FUND_DATA, branch };
+    return { ...MOCK_DEV_FUND_DATA, branch: "All" };
   }
 
-  const response = await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "get_dev_fund", branch }),
+  const cacheKey = 'devFund:all';
+
+  return cachedFetch(cacheKey, async () => {
+    const response = await fetchWithRetry(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "get_dev_fund" }),
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "Failed to get development fund data");
+    return data.data;
   });
-  const data = await response.json();
-  if (!data.success) throw new Error(data.error);
-  return data.data;
 }
 
 export async function addDevelopmentExpense(
-  branch: string,
   month: number,
+  title: string,
   description: string,
+  scope: string,
   amount: number,
 ): Promise<DevExpense> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     const newExpense: DevExpense = {
       id: `DEV-${Date.now()}`,
       month,
       year: "2026",
+      title,
       description,
+      scope,
       amount,
       dateAdded: new Date().toISOString().split("T")[0],
     };
     return newExpense;
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "add_dev_expense",
-      branch,
       month,
+      title,
       description,
+      scope,
       amount,
     }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to add expense");
+
+  // Invalidate dev fund and financial caches
+  invalidateCache('devFund');
+  invalidateCache('financial');
+
   return data.data;
+}
+
+export async function deleteDevelopmentExpense(
+  expenseId: string,
+): Promise<{ success: boolean }> {
+  if (isMockData()) {
+    await new Promise((r) => setTimeout(r, 300));
+    return { success: true };
+  }
+
+  const response = await fetchWithRetry(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "delete_dev_expense",
+      expenseId,
+    }),
+  });
+  const data = await response.json();
+  if (!data.success) throw new Error(data.error || "Failed to delete expense");
+
+  // Invalidate dev fund and financial caches
+  invalidateCache('devFund');
+  invalidateCache('financial');
+
+  return { success: true };
 }
 
 // ============================================
@@ -365,17 +612,17 @@ export interface StudentCredits {
 export async function getReferralCredits(
   branch: string,
 ): Promise<ReferralCreditsData> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     return { credits: [], totalUnused: 0, totalUsed: 0 };
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({ action: "get_referral_credits", branch }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to get referral credits");
   return data.data;
 }
 
@@ -395,7 +642,7 @@ export async function addReferralCredit(
   dateEarned: string;
   isUsed: boolean;
 }> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 500));
     return {
       id: "REF-MOCK-" + Math.floor(Math.random() * 1000),
@@ -408,7 +655,7 @@ export async function addReferralCredit(
     };
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "add_referral_credit",
@@ -421,7 +668,7 @@ export async function addReferralCredit(
     }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to add referral credit");
   return data.data;
 }
 
@@ -429,17 +676,17 @@ export async function getStudentAvailableCredits(
   studentId: string,
   branch: string,
 ): Promise<StudentCredits> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     return { credits: [], totalAvailable: 0 };
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({ action: "get_student_credits", studentId, branch }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to get student credits");
   return data.data;
 }
 
@@ -449,12 +696,12 @@ export async function markPaidWithCredit(
   month: number,
   creditId: string,
 ): Promise<void> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     return;
   }
 
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "mark_paid_with_credit",
@@ -465,7 +712,7 @@ export async function markPaidWithCredit(
     }),
   });
   const data = await response.json();
-  if (!data.success) throw new Error(data.error);
+  if (!data.success) throw new Error(data.error || "Failed to mark paid with credit");
 }
 
 // ============================================
@@ -497,7 +744,7 @@ export async function getFinancialSummary(
   branch: string,
   month: number,
 ): Promise<FinancialSummary> {
-  if (useMockData()) {
+  if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
     return {
       month,
@@ -516,11 +763,15 @@ export async function getFinancialSummary(
     };
   }
 
-  const response = await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "get_financial_summary", branch, month }),
+  const cacheKey = `financial:${branch}:${month}`;
+
+  return cachedFetch(cacheKey, async () => {
+    const response = await fetchWithRetry(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "get_financial_summary", branch, month }),
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || "Failed to get financial summary");
+    return data.data;
   });
-  const data = await response.json();
-  if (!data.success) throw new Error(data.error);
-  return data.data;
 }

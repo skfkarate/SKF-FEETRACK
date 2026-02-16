@@ -1,7 +1,7 @@
 "use client";
 
 import { Student } from "@/lib/api";
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import NextImage from "next/image";
 const BASE_PATH = "https://skfkarate.github.io/SKF-FEETRACK"; // Hardcoded absolute URL
 
@@ -37,18 +37,23 @@ export default function MonthlyFeeReceipt({
 
   const branchName =
     branch === "MPSC" ? "MP Sports Club" : branch?.toUpperCase();
-  const receiptNo = `SKF-${branch.substring(0, 1).toUpperCase()}-${Date.now()
-    .toString()
-    .slice(-4)}`;
-  const date = new Date().toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
-  const purpose = `${new Date(2026, month, 1).toLocaleDateString("en-IN", {
-    month: "long",
-  })} Monthly Training Fee`;
-  const amountWords = `Rupees ${student.fee.toLocaleString()} Only`;
+
+  const { receiptNo, date, purpose, amountWords } = useMemo(() => {
+    const now = Date.now();
+    const today = new Date();
+    return {
+      receiptNo: `SKF-${branch.substring(0, 1).toUpperCase()}-${now.toString().slice(-4)}`,
+      date: today.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
+      purpose: `${new Date(2026, month, 1).toLocaleDateString("en-IN", {
+        month: "long",
+      })} Monthly Training Fee`,
+      amountWords: `Rupees ${student.fee.toLocaleString()} Only`,
+    };
+  }, [branch, month, student.fee]);
 
   // Use browser's native print for PERFECT visual match
   const downloadReceipt = () => {

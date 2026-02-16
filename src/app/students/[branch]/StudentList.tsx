@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Check, Gift } from "lucide-react";
+import { ArrowLeft, Gift } from "lucide-react";
 
 import {
   getStudents,
@@ -16,7 +16,7 @@ import {
   Student,
   StudentCredits,
 } from "@/lib/api";
-import jsPDF from "jspdf"; // can remove this if no other pdf use
+
 import MonthlyFeeReceipt from "@/components/receipts/MonthlyFeeReceipt";
 
 const MONTHS = [
@@ -392,13 +392,12 @@ export default function StudentList({ branch }: { branch: string }) {
                 Rate
               </p>
               <p
-                className={`font-[family-name:var(--font-oswald)] text-2xl ${
-                  stats.collectionRate >= 80
+                className={`font-[family-name:var(--font-oswald)] text-2xl ${stats.collectionRate >= 80
                     ? "text-green-500"
                     : stats.collectionRate >= 50
                       ? "text-yellow-500"
                       : "text-red-500"
-                }`}
+                  }`}
               >
                 {stats.collectionRate}%
               </p>
@@ -418,11 +417,10 @@ export default function StudentList({ branch }: { branch: string }) {
           <div className="flex gap-2">
             <button
               onClick={() => setShowPendingOnly(!showPendingOnly)}
-              className={`px-4 py-2 text-sm border transition-all ${
-                showPendingOnly
+              className={`px-4 py-2 text-sm border transition-all ${showPendingOnly
                   ? "bg-red-600 border-red-600 text-white"
                   : "bg-transparent border-[#333] text-gray-400 hover:border-red-600"
-              }`}
+                }`}
             >
               {showPendingOnly ? "✓ Pending" : "Pending Only"}
             </button>
@@ -475,13 +473,12 @@ export default function StudentList({ branch }: { branch: string }) {
                 return (
                   <div
                     key={student.id}
-                    className={`bg-[#1a1a1a] border border-[#333] p-4 transition-opacity ${
-                      isDiscontinued
+                    className={`bg-[#1a1a1a] border border-[#333] p-4 transition-opacity ${isDiscontinued
                         ? "opacity-40"
                         : isBreak
                           ? "opacity-50"
                           : ""
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -524,9 +521,8 @@ export default function StudentList({ branch }: { branch: string }) {
                         </button>
                       ) : isInactive ? (
                         <span
-                          className={`px-4 py-2 font-[family-name:var(--font-oswald)] text-sm tracking-wider ${
-                            isBreak ? "text-orange-500" : "text-gray-500"
-                          }`}
+                          className={`px-4 py-2 font-[family-name:var(--font-oswald)] text-sm tracking-wider ${isBreak ? "text-orange-500" : "text-gray-500"
+                            }`}
                         >
                           {isBreak ? "ON BREAK" : "LEFT"}
                         </span>
@@ -545,7 +541,7 @@ export default function StudentList({ branch }: { branch: string }) {
                           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 font-[family-name:var(--font-oswald)] text-sm tracking-wider disabled:opacity-50 select-none"
                         >
                           {markingPaid === student.id ||
-                          markingStatus === student.id
+                            markingStatus === student.id
                             ? "..."
                             : "MARK PAID"}
                         </button>
@@ -627,9 +623,9 @@ export default function StudentList({ branch }: { branch: string }) {
                   ₹
                   {selectedCreditId && studentCredits
                     ? Math.max(
-                        0,
-                        confirmStudent.fee - studentCredits.totalAvailable,
-                      )
+                      0,
+                      confirmStudent.fee - studentCredits.totalAvailable,
+                    )
                     : confirmStudent.fee}
                 </p>
               </div>

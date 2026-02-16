@@ -11,10 +11,6 @@ import {
   CheckCircle2,
   Clock,
   Gift,
-  Wallet,
-  TrendingDown,
-  TrendingUp,
-  Landmark,
   X,
 } from "lucide-react";
 
@@ -100,21 +96,19 @@ export default function FinancesPage() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${
-              branch === "Herohalli"
+            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${branch === "Herohalli"
                 ? "bg-red-600 border-red-600 text-white"
                 : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
-            }`}
+              }`}
           >
             Herohalli
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${
-              branch === "MPSC"
+            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${branch === "MPSC"
                 ? "bg-red-600 border-red-600 text-white"
                 : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
-            }`}
+              }`}
           >
             MP Sports Club
           </button>
@@ -248,7 +242,7 @@ export default function FinancesPage() {
                   <div>
                     <p className="text-gray-400 text-sm">30% Allocation</p>
                     <p className="text-gray-600 text-xs">
-                      From this month's collection
+                      From this month&apos;s collection
                     </p>
                   </div>
                   <p className="font-[family-name:var(--font-oswald)] text-xl text-white">

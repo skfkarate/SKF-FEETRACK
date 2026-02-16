@@ -3,10 +3,20 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Package, PiggyBank, Save, TrendingUp } from "lucide-react";
+import {
+  ArrowLeft,
+  Package,
+  PiggyBank,
+  Save,
+  TrendingUp,
+  X,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react";
 import {
   getDevelopmentFundData,
   addDevelopmentExpense,
+  deleteDevelopmentExpense,
   DevelopmentFundData,
   DevExpense,
 } from "@/lib/api";
@@ -26,9 +36,15 @@ const MONTHS = [
   "Dec",
 ];
 
+const SCOPE_OPTIONS = [
+  { value: "Herohalli", label: "Herohalli" },
+  { value: "MPSC", label: "MP Sports Club" },
+  { value: "Both", label: "Both Branches" },
+  { value: "Others", label: "Others" },
+];
+
 export default function DevelopmentFundPage() {
   const router = useRouter();
-  const [branch, setBranch] = useState("Herohalli");
   const [data, setData] = useState<DevelopmentFundData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,10 +53,22 @@ export default function DevelopmentFundPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newExpense, setNewExpense] = useState({
     month: new Date().getMonth(),
+    title: "",
     description: "",
+    scope: "Both",
+    scopeOther: "",
     amount: 0,
   });
   const [adding, setAdding] = useState(false);
+
+  // Confirmation Modal
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Detail Modal
+  const [selectedExpense, setSelectedExpense] = useState<DevExpense | null>(
+    null
+  );
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("skf_user");
@@ -58,40 +86,64 @@ export default function DevelopmentFundPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await getDevelopmentFundData(branch);
+      const result = await getDevelopmentFundData();
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [branch]);
+  }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleAddExpense = async () => {
+  const handleAddExpenseClick = () => {
+    // Validate before showing confirmation
+    if (!newExpense.title.trim()) {
+      alert("Please enter a title");
+      return;
+    }
     if (!newExpense.description.trim()) {
       alert("Please enter a description");
+      return;
+    }
+    if (newExpense.scope === "Others" && !newExpense.scopeOther.trim()) {
+      alert("Please specify the scope");
       return;
     }
     if (newExpense.amount <= 0) {
       alert("Please enter a valid amount");
       return;
     }
+    // Show confirmation
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSave = async () => {
     setAdding(true);
     try {
+      const finalScope =
+        newExpense.scope === "Others"
+          ? newExpense.scopeOther.trim()
+          : newExpense.scope;
+
       await addDevelopmentExpense(
-        branch,
         newExpense.month,
-        newExpense.description,
-        newExpense.amount,
+        newExpense.title.trim(),
+        newExpense.description.trim(),
+        finalScope,
+        newExpense.amount
       );
+      setShowConfirmModal(false);
       setShowAddModal(false);
       setNewExpense({
         month: new Date().getMonth(),
+        title: "",
         description: "",
+        scope: "Both",
+        scopeOther: "",
         amount: 0,
       });
       loadData(); // Reload to get updated data
@@ -102,8 +154,36 @@ export default function DevelopmentFundPage() {
     }
   };
 
-  const branchName =
-    branch === "MPSC" ? "MP SPORTS CLUB" : branch.toUpperCase();
+  const canDeleteExpense = (expense: DevExpense): boolean => {
+    // Check if expense is within 24 hours of creation
+    const addedDate = new Date(expense.dateAdded);
+    const now = new Date();
+    const hoursDiff =
+      (now.getTime() - addedDate.getTime()) / (1000 * 60 * 60);
+    return hoursDiff <= 24;
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!selectedExpense) return;
+
+    if (!canDeleteExpense(selectedExpense)) {
+      alert(
+        "This expense cannot be deleted. Expenses can only be deleted within 24 hours of creation."
+      );
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteDevelopmentExpense(selectedExpense.id);
+      setSelectedExpense(null);
+      loadData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete expense");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const [filter, setFilter] = useState<number | "all">("all");
 
@@ -132,6 +212,24 @@ export default function DevelopmentFundPage() {
     };
   }, [data, filter]);
 
+  const getScopeLabel = (scope: string): string => {
+    const option = SCOPE_OPTIONS.find((o) => o.value === scope);
+    return option ? option.label : scope;
+  };
+
+  const getScopeBadgeColor = (scope: string): string => {
+    switch (scope) {
+      case "Herohalli":
+        return "bg-blue-600/20 text-blue-400 border-blue-600/50";
+      case "MPSC":
+        return "bg-purple-600/20 text-purple-400 border-purple-600/50";
+      case "Both":
+        return "bg-green-600/20 text-green-400 border-green-600/50";
+      default:
+        return "bg-yellow-600/20 text-yellow-400 border-yellow-600/50";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
@@ -147,36 +245,12 @@ export default function DevelopmentFundPage() {
             <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
               DEVELOPMENT FUND
             </h1>
-            <p className="text-gray-500 text-sm">{branchName}</p>
+            <p className="text-gray-500 text-sm">All Branches • 30% Allocation</p>
           </div>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto p-4">
-        {/* Branch Toggle */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${
-              branch === "Herohalli"
-                ? "bg-red-600 border-red-600 text-white"
-                : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
-            }`}
-          >
-            Herohalli
-          </button>
-          <button
-            onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${
-              branch === "MPSC"
-                ? "bg-red-600 border-red-600 text-white"
-                : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
-            }`}
-          >
-            MP Sports Club
-          </button>
-        </div>
-
         {/* Filter */}
         <div className="mb-6">
           <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
@@ -186,7 +260,7 @@ export default function DevelopmentFundPage() {
             value={filter}
             onChange={(e) =>
               setFilter(
-                e.target.value === "all" ? "all" : parseInt(e.target.value),
+                e.target.value === "all" ? "all" : parseInt(e.target.value)
               )
             }
             className="w-full bg-[#1a1a1a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none font-[family-name:var(--font-oswald)] tracking-wider"
@@ -300,17 +374,17 @@ export default function DevelopmentFundPage() {
                             </tr>
                           ))}
                         {data.monthlyBreakdown.every(
-                          (m) => m.collected === 0 && m.spent === 0,
+                          (m) => m.collected === 0 && m.spent === 0
                         ) && (
-                          <tr>
-                            <td
-                              colSpan={5}
-                              className="p-6 text-center text-gray-500"
-                            >
-                              No fee payments or expenses recorded yet
-                            </td>
-                          </tr>
-                        )}
+                            <tr>
+                              <td
+                                colSpan={5}
+                                className="p-6 text-center text-gray-500"
+                              >
+                                No fee payments or expenses recorded yet
+                              </td>
+                            </tr>
+                          )}
                       </tbody>
                     </table>
                   </div>
@@ -343,20 +417,30 @@ export default function DevelopmentFundPage() {
                     .map((expense) => (
                       <div
                         key={expense.id}
-                        className="bg-[#1a1a1a] border border-[#333] p-4 flex items-center justify-between"
+                        onClick={() => setSelectedExpense(expense)}
+                        className="bg-[#1a1a1a] border border-[#333] p-4 cursor-pointer hover:border-red-600/50 transition-colors"
                       >
-                        <div>
-                          <p className="font-[family-name:var(--font-oswald)] tracking-wide">
-                            {expense.description}
-                          </p>
-                          <p className="text-gray-600 text-sm">
-                            {MONTHS[expense.month]} {expense.year} •{" "}
-                            {expense.dateAdded}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-[family-name:var(--font-oswald)] tracking-wide truncate">
+                                {expense.title || expense.description}
+                              </p>
+                              <span
+                                className={`text-xs px-2 py-0.5 border rounded ${getScopeBadgeColor(expense.scope || "Both")}`}
+                              >
+                                {getScopeLabel(expense.scope || "Both")}
+                              </span>
+                            </div>
+                            <p className="text-gray-600 text-sm">
+                              {MONTHS[expense.month]} {expense.year} •{" "}
+                              {expense.dateAdded}
+                            </p>
+                          </div>
+                          <p className="font-[family-name:var(--font-oswald)] text-lg text-orange-400 ml-4">
+                            -₹{expense.amount.toLocaleString()}
                           </p>
                         </div>
-                        <p className="font-[family-name:var(--font-oswald)] text-lg text-orange-400">
-                          -₹{expense.amount.toLocaleString()}
-                        </p>
                       </div>
                     ))
                 )}
@@ -369,12 +453,62 @@ export default function DevelopmentFundPage() {
       {/* Add Expense Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-sm p-6">
-            <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider mb-6 text-center">
-              ADD EXPENSE
-            </h2>
+          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                ADD EXPENSE
+              </h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
             <div className="space-y-4">
+              <div>
+                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
+                  Scope *
+                </label>
+                <select
+                  value={newExpense.scope}
+                  onChange={(e) =>
+                    setNewExpense({
+                      ...newExpense,
+                      scope: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+                >
+                  {SCOPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {newExpense.scope === "Others" && (
+                <div>
+                  <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
+                    Specify Scope *
+                  </label>
+                  <input
+                    type="text"
+                    value={newExpense.scopeOther}
+                    onChange={(e) =>
+                      setNewExpense({
+                        ...newExpense,
+                        scopeOther: e.target.value,
+                      })
+                    }
+                    placeholder="e.g., Tournament, Training Camp..."
+                    className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
                   Month *
@@ -399,10 +533,27 @@ export default function DevelopmentFundPage() {
 
               <div>
                 <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                  Description *
+                  Title *
                 </label>
                 <input
                   type="text"
+                  value={newExpense.title}
+                  onChange={(e) =>
+                    setNewExpense({
+                      ...newExpense,
+                      title: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Karate Equipment, Practice Mats..."
+                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
+                  Description *
+                </label>
+                <textarea
                   value={newExpense.description}
                   onChange={(e) =>
                     setNewExpense({
@@ -410,8 +561,9 @@ export default function DevelopmentFundPage() {
                       description: e.target.value,
                     })
                   }
-                  placeholder="e.g., Practice Mats, Karate Equipment..."
-                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+                  placeholder="Provide detailed description of the expense..."
+                  rows={3}
+                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none resize-none"
                 />
               </div>
 
@@ -442,22 +594,172 @@ export default function DevelopmentFundPage() {
                 CANCEL
               </button>
               <button
-                onClick={handleAddExpense}
-                disabled={
-                  adding ||
-                  !newExpense.description.trim() ||
-                  newExpense.amount <= 0
-                }
+                onClick={handleAddExpenseClick}
+                className="flex-1 py-3 bg-green-600 text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-green-700"
+              >
+                REVIEW & SAVE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-4">
+          <div className="bg-[#1a1a1a] border border-yellow-600/50 w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <AlertTriangle className="w-6 h-6 text-yellow-500" />
+              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                CONFIRM EXPENSE
+              </h2>
+            </div>
+
+            <p className="text-gray-400 mb-4">
+              Please review the expense details before saving:
+            </p>
+
+            <div className="bg-[#0a0a0a] border border-[#333] p-4 space-y-3 mb-6">
+              <div>
+                <p className="text-gray-500 text-xs uppercase">Scope</p>
+                <p className="text-white">
+                  {newExpense.scope === "Others"
+                    ? newExpense.scopeOther
+                    : getScopeLabel(newExpense.scope)}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase">Month</p>
+                <p className="text-white">{MONTHS[newExpense.month]} 2026</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase">Title</p>
+                <p className="text-white">{newExpense.title}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase">Description</p>
+                <p className="text-white text-sm">{newExpense.description}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase">Amount</p>
+                <p className="text-orange-400 font-[family-name:var(--font-oswald)] text-xl">
+                  ₹{newExpense.amount.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                disabled={adding}
+                className="flex-1 py-3 bg-[#333] text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-[#444] disabled:opacity-50"
+              >
+                GO BACK
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                disabled={adding}
                 className="flex-1 py-3 bg-green-600 text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-green-700 disabled:opacity-50"
               >
                 {adding ? (
-                  "..."
+                  "SAVING..."
                 ) : (
-                  <span className="flex items-center gap-2">
-                    <Save className="w-4 h-4" /> SAVE
+                  <span className="flex items-center justify-center gap-2">
+                    <Save className="w-4 h-4" /> CONFIRM
                   </span>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expense Detail Modal */}
+      {selectedExpense && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                EXPENSE DETAILS
+              </h2>
+              <button
+                onClick={() => setSelectedExpense(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-xs px-2 py-1 border rounded ${getScopeBadgeColor(selectedExpense.scope || "Both")}`}
+                >
+                  {getScopeLabel(selectedExpense.scope || "Both")}
+                </span>
+                <span className="text-gray-500 text-sm">
+                  {MONTHS[selectedExpense.month]} {selectedExpense.year}
+                </span>
+              </div>
+
+              <div>
+                <p className="text-gray-500 text-xs uppercase mb-1">Title</p>
+                <p className="font-[family-name:var(--font-oswald)] text-lg tracking-wide">
+                  {selectedExpense.title || selectedExpense.description}
+                </p>
+              </div>
+
+              {selectedExpense.description &&
+                selectedExpense.title !== selectedExpense.description && (
+                  <div>
+                    <p className="text-gray-500 text-xs uppercase mb-1">
+                      Description
+                    </p>
+                    <p className="text-gray-300">{selectedExpense.description}</p>
+                  </div>
+                )}
+
+              <div>
+                <p className="text-gray-500 text-xs uppercase mb-1">Amount</p>
+                <p className="font-[family-name:var(--font-oswald)] text-2xl text-orange-400">
+                  ₹{selectedExpense.amount.toLocaleString()}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 text-xs uppercase mb-1">
+                  Date Added
+                </p>
+                <p className="text-gray-300">{selectedExpense.dateAdded}</p>
+              </div>
+
+              <div className="text-gray-600 text-xs">
+                ID: {selectedExpense.id}
+              </div>
+            </div>
+
+            {/* Delete Section */}
+            <div className="border-t border-[#333] pt-4">
+              {canDeleteExpense(selectedExpense) ? (
+                <button
+                  onClick={handleDeleteExpense}
+                  disabled={deleting}
+                  className="w-full py-3 bg-red-600/20 border border-red-600 text-red-500 font-[family-name:var(--font-oswald)] tracking-wider hover:bg-red-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {deleting ? "DELETING..." : "DELETE EXPENSE"}
+                </button>
+              ) : (
+                <div className="text-center">
+                  <p className="text-gray-500 text-sm mb-2">
+                    ⚠️ Delete not available
+                  </p>
+                  <p className="text-gray-600 text-xs">
+                    Expenses can only be deleted within 24 hours of creation to
+                    prevent corruption.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -22,7 +22,9 @@ export const metadata: Metadata = {
     title: "SKF Fees",
   },
   icons: {
-    apple: "https://skfkarate.github.io/SKF-FEETRACK/logo.png",
+    icon: "/SKF-FEETRACK/icon.png",
+    shortcut: "/SKF-FEETRACK/icon.png",
+    apple: "/SKF-FEETRACK/icon.png",
   },
 };
 

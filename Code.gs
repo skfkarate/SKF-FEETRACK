@@ -192,10 +192,25 @@ const CONFIG = {
     },
   },
   year: "2026",
-  monthStart: 4, // Column E (0-indexed: A=0, B=1, C=2, D=3, E=4)
+  monthStart: 4, // Column E (0-indexed: A=0, B=1, C=2, D=3, E=4) - fallback value
   devFundPercent: 0.3, // 30% of collected fees goes to development fund
   defaultReferralCredit: 500, // Default referral bonus amount
 };
+
+/**
+ * Dynamically find the "Jan" column index in a fees sheet
+ * This ensures correct month column mapping regardless of sheet structure
+ */
+function getJanColumnIndex(feesSheet) {
+  const headers = feesSheet.getRange(1, 1, 1, feesSheet.getLastColumn()).getValues()[0];
+  for (let i = 0; i < headers.length; i++) {
+    const header = String(headers[i]).trim().toLowerCase();
+    if (header === "jan" || header === "january") {
+      return i; // 0-indexed for array access
+    }
+  }
+  return CONFIG.monthStart; // fallback to config
+}
 
 // ============================================
 // API ENDPOINTS
@@ -243,15 +258,19 @@ function doPost(e) {
         break;
       // Development Fund Actions
       case "get_dev_fund":
-        result = getDevelopmentFundData(payload.branch);
+        result = getDevelopmentFundDataUnified();
         break;
       case "add_dev_expense":
         result = addDevelopmentExpense(
-          payload.branch,
           payload.month,
+          payload.title,
           payload.description,
+          payload.scope,
           payload.amount,
         );
+        break;
+      case "delete_dev_expense":
+        result = deleteDevelopmentExpense(payload.expenseId);
         break;
       // Referral Credits Actions
       case "get_referral_credits":
@@ -289,6 +308,12 @@ function doPost(e) {
       case "get_financial_summary":
         result = getFinancialSummary(payload.branch, payload.month);
         break;
+      
+      // Debug - show raw fees data structure
+      case "debug_fees":
+        result = debugFeesSheet(payload.branch);
+        break;
+        
       default:
         throw new Error("Unknown action: " + payload.action);
     }
@@ -323,6 +348,17 @@ function getStudentsWithPaymentStatus(branch, month) {
 
   const dbData = dbSheet.getDataRange().getValues();
   const feesData = feesSheet.getDataRange().getValues();
+  
+  // DYNAMIC JAN COLUMN DETECTION - Find 'Jan' header in fees sheet
+  const feesHeaders = feesData[0];
+  let janColIndex = CONFIG.monthStart; // fallback to config
+  for (let i = 0; i < feesHeaders.length; i++) {
+    const header = String(feesHeaders[i]).trim().toLowerCase();
+    if (header === "jan" || header === "january") {
+      janColIndex = i;
+      break;
+    }
+  }
 
   // Get Credits used in this month
   const creditsMap = {}; // studentId -> totalCreditAmount
@@ -358,7 +394,8 @@ function getStudentsWithPaymentStatus(branch, month) {
   }
 
   const students = [];
-  const monthCol = CONFIG.monthStart + month;
+  // Use dynamically detected Jan column + month offset
+  const monthCol = janColIndex + month;
 
   for (let i = 1; i < dbData.length; i++) {
     const row = dbData[i];
@@ -433,7 +470,9 @@ function markStudentPaid(studentId, branch, month) {
 
   if (studentRow === -1) throw new Error("Student not found: " + studentId);
 
-  const monthCol = CONFIG.monthStart + 1 + month;
+  // Use dynamic Jan column detection + 1 for 1-indexed getRange
+  const janColIndex = getJanColumnIndex(feesSheet);
+  const monthCol = janColIndex + 1 + month;
   feesSheet.getRange(studentRow, monthCol).setValue("Paid");
 
   return { id: studentId, month: month, status: "paid" };
@@ -591,7 +630,8 @@ function markStudentBreak(studentId, branch, month) {
   }
 
   // Mark status as "Break"
-  const monthCol = CONFIG.monthStart + 1 + month;
+  const janColIndex = getJanColumnIndex(feesSheet);
+  const monthCol = janColIndex + 1 + month;
   feesSheet.getRange(studentRow, monthCol).setValue("Break");
 
   return { id: studentId, month: month, status: "break" };
@@ -652,7 +692,8 @@ function markStudentDiscontinued(studentId, branch, month) {
   }
 
   // Mark the current month as Discontinued in Fees sheet
-  const monthCol = CONFIG.monthStart + 1 + month;
+  const janColIndex = getJanColumnIndex(feesSheet);
+  const monthCol = janColIndex + 1 + month;
   feesSheet.getRange(studentRow, monthCol).setValue("Discontinued");
 
   // 2. Update Status AND EndMonth in DB sheet
@@ -699,14 +740,18 @@ function getFinancialSummary(branch, month) {
   // Helper to calculate YTD allocation
   const feesSheet = ss.getSheetByName(config.fees);
   let cumulativeAllocation = 0;
+  
+  // DYNAMIC Jan column detection for feesSheet
+  let feesJanColIndex = CONFIG.monthStart;
   if (feesSheet) {
+    feesJanColIndex = getJanColumnIndex(feesSheet);
     const feesData = feesSheet.getDataRange().getValues();
     // Calculate till current month (or all months if month is -1)
     const limitMonth = month === -1 ? 11 : month;
 
     for (let m = 0; m <= limitMonth; m++) {
       let monthCollected = 0;
-      const monthCol = CONFIG.monthStart + m;
+      const monthCol = feesJanColIndex + m;
 
       for (let i = 1; i < feesData.length; i++) {
         const value = String(feesData[i][monthCol] || "").trim();
@@ -767,6 +812,10 @@ function getFinancialSummary(branch, month) {
 
     activeCount = active.length;
     paidCount = 0;
+    
+    // Track unique paid student-months for proper counting
+    let totalPaidRecords = 0;
+    let totalExpectedRecords = 0;
 
     // Build fees lookup
     const feesLookup = {};
@@ -788,14 +837,6 @@ function getFinancialSummary(branch, month) {
     // Sum up for all active students
     active.forEach((student) => {
       // Use originalFee if available (from DB), else 500
-      const fee = student.fee || 500;
-      // Note: student.fee from getStudentsWithPaymentStatus (called with month=0)
-      // returns the base fee because month 0 doesn't trigger credit deduction logic (unless credits used in month 0)
-      // Actually, passing month=0 might subtract credits used in Jan.
-      // But for YTD expected, we want the BASE fee for ALL months.
-      // Let's use DB fee directly from row lookup if possible, or student.originalFee if available.
-      // getStudentsWithPaymentStatus populates .fee (Net) and .originalFee (Gross).
-      // If we used month=0, it checked Jan credits.
       // Safe bet: use student.originalFee || student.fee
       const baseFee = student.originalFee || student.fee || 500;
 
@@ -809,16 +850,26 @@ function getFinancialSummary(branch, month) {
         if (m < joinedAt) continue;
 
         expected += baseFee;
+        totalExpectedRecords++;
 
         if (feeRow) {
-          const colIndex = CONFIG.monthStart + m;
+          const colIndex = feesJanColIndex + m;
           const status = String(feeRow[colIndex] || "").trim();
           if (status === "Paid" || status === "PAID") {
             collected += baseFee;
+            totalPaidRecords++;
           }
         }
       }
     });
+    
+    // For YTD, paidCount represents the total number of paid month-records
+    // and pendingStudents represents total unpaid month-records
+    // We'll set paidCount to totalPaidRecords for accurate reporting
+    paidCount = totalPaidRecords;
+    // Note: pendingStudents will be calculated as totalExpectedRecords - totalPaidRecords
+    // But since the return format expects student counts, we'll leave activeCount as active.length
+    // The pending/pendingStudents calculation happens at the return statement
   } else {
     // Specific Month Calculation
     const students = getStudentsWithPaymentStatus(branch, month);
@@ -925,7 +976,9 @@ function getDevelopmentFundData(branch) {
   }
 
   // Calculate collected amount per month from fees sheet
-  // Fee amount is in column 3 (index 2), months start at column E (index 4)
+  // Fee amount is in column 3 (index 2), months dynamically detected from Jan header
+  const janColIndex = getJanColumnIndex(feesSheet);
+  
   for (let i = 1; i < feesData.length; i++) {
     const row = feesData[i];
     const year = String(row[3]).trim();
@@ -936,7 +989,7 @@ function getDevelopmentFundData(branch) {
 
     // Check each month column
     for (let m = 0; m < 12; m++) {
-      const monthCol = CONFIG.monthStart + m;
+      const monthCol = janColIndex + m;
       const status = String(row[monthCol]).trim();
 
       if (status === "Paid") {
@@ -956,6 +1009,11 @@ function getDevelopmentFundData(branch) {
   const expenses = [];
   if (devFundSheet) {
     const devData = devFundSheet.getDataRange().getValues();
+    
+    // Detect new format (8 columns with Title, Description, Scope, Amount, Date_Added)
+    // vs old format (6 columns with Description, Amount, Date_Added)
+    const headers = devData[0] || [];
+    const isNewFormat = headers.length >= 8 && String(headers[5]).toLowerCase().includes('scope');
 
     for (let i = 1; i < devData.length; i++) {
       const row = devData[i];
@@ -964,15 +1022,24 @@ function getDevelopmentFundData(branch) {
 
       const expenseMonth = parseInt(row[1]) || 0;
       const expenseYear = String(row[2]).trim();
-      const amount = Number(row[4]) || 0;
+      
+      // Handle both formats for amount
+      let amount;
+      if (isNewFormat) {
+        // New format: Amount is at index 6
+        amount = Number(row[6]) || 0;
+      } else {
+        // Old format: Amount is at index 4
+        amount = Number(row[4]) || 0;
+      }
 
       expenses.push({
         id: expenseId,
         month: expenseMonth,
         year: expenseYear,
-        description: row[3] || "",
+        description: isNewFormat ? (row[3] || row[4] || "") : (row[3] || ""),
         amount: amount,
-        dateAdded: row[5] || "",
+        dateAdded: isNewFormat ? (row[7] || "") : (row[5] || ""),
       });
 
       // Add to monthly spent if same year
@@ -1009,36 +1076,178 @@ function getDevelopmentFundData(branch) {
 }
 
 /**
- * Add a new expense to the development fund
+ * Get unified development fund data combining both branches
  */
-function addDevelopmentExpense(branch, month, description, amount) {
+function getDevelopmentFundDataUnified() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const config = CONFIG.branches[branch];
 
-  if (!config) throw new Error("Invalid branch: " + branch);
+  // Initialize monthly totals
+  const monthlyData = [];
+  for (let m = 0; m < 12; m++) {
+    monthlyData.push({
+      month: m,
+      year: CONFIG.year,
+      collected: 0,
+      devFund: 0,
+      spent: 0,
+      carryForward: 0,
+    });
+  }
+
+  const allExpenses = [];
+
+  // Process both branches
+  const branches = ["Herohalli", "MPSC"];
+  for (const branch of branches) {
+    const config = CONFIG.branches[branch];
+    if (!config) continue;
+
+    const feesSheet = ss.getSheetByName(config.fees);
+    const devFundSheet = ss.getSheetByName(config.devFund);
+
+    // Calculate collected amount per month from fees sheet
+    if (feesSheet) {
+      const feesData = feesSheet.getDataRange().getValues();
+      const janColIndex = getJanColumnIndex(feesSheet);
+      
+      for (let i = 1; i < feesData.length; i++) {
+        const row = feesData[i];
+        const year = String(row[3]).trim();
+        if (year !== CONFIG.year) continue;
+
+        const fee = Number(row[2]) || 0;
+        for (let m = 0; m < 12; m++) {
+          const monthCol = janColIndex + m;
+          const status = String(row[monthCol]).trim();
+          if (status === "Paid") {
+            monthlyData[m].collected += fee;
+          }
+        }
+      }
+    }
+
+    // Get expenses from DevFund sheet
+    if (devFundSheet) {
+      const devData = devFundSheet.getDataRange().getValues();
+      
+      // Detect new format (8 columns with Title, Description, Scope, Amount, Date_Added)
+      // vs old format (6 columns with Description, Amount, Date_Added)
+      const headers = devData[0] || [];
+      const isNewFormat = headers.length >= 8 && String(headers[5]).toLowerCase().includes('scope');
+
+      for (let i = 1; i < devData.length; i++) {
+        const row = devData[i];
+        const expenseId = String(row[0]).trim();
+        if (!expenseId) continue;
+
+        const expenseMonth = parseInt(row[1]) || 0;
+        const expenseYear = String(row[2]).trim();
+        
+        // Handle both formats for amount - try new format first, fallback to old
+        let amount;
+        if (isNewFormat) {
+          amount = Number(row[6]) || 0;
+        } else {
+          amount = Number(row[4]) || 0;
+        }
+        
+        // If amount is still 0, try both columns as fallback
+        if (amount === 0) {
+          amount = Number(row[6]) || Number(row[4]) || 0;
+        }
+
+        allExpenses.push({
+          id: expenseId,
+          month: expenseMonth,
+          year: expenseYear,
+          title: isNewFormat ? (row[3] || "") : "",
+          description: isNewFormat ? (row[4] || "") : (row[3] || ""),
+          scope: isNewFormat ? (row[5] || branch) : branch,
+          amount: amount,
+          dateAdded: isNewFormat ? (row[7] || "") : (row[5] || ""),
+        });
+
+        // Add to monthly spent if same year
+        if (
+          expenseYear === CONFIG.year &&
+          expenseMonth >= 0 &&
+          expenseMonth < 12
+        ) {
+          monthlyData[expenseMonth].spent += amount;
+        }
+      }
+    }
+  }
+
+  // Calculate 30% dev fund for each month
+  for (let m = 0; m < 12; m++) {
+    monthlyData[m].devFund = Math.round(
+      monthlyData[m].collected * CONFIG.devFundPercent,
+    );
+  }
+
+  // Calculate running carry-forward balance
+  let runningBalance = 0;
+  for (let m = 0; m < 12; m++) {
+    runningBalance += monthlyData[m].devFund - monthlyData[m].spent;
+    monthlyData[m].carryForward = runningBalance;
+  }
+
+  // Calculate totals
+  const totalContributions = monthlyData.reduce((sum, m) => sum + m.devFund, 0);
+  const totalSpent = monthlyData.reduce((sum, m) => sum + m.spent, 0);
+  const availableBalance = totalContributions - totalSpent;
+
+  return {
+    branch: "All",
+    monthlyBreakdown: monthlyData,
+    expenses: allExpenses,
+    totalContributions: totalContributions,
+    totalSpent: totalSpent,
+    availableBalance: availableBalance,
+  };
+}
+
+/**
+ * Add a new expense to the development fund
+ * Now stores in Herohalli DevFund sheet with scope field
+ */
+function addDevelopmentExpense(month, title, description, scope, amount) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const config = CONFIG.branches["Herohalli"]; // Store all in Herohalli sheet
 
   let devFundSheet = ss.getSheetByName(config.devFund);
 
-  // Create sheet if it doesn't exist
+  // Create sheet if it doesn't exist with updated columns
   if (!devFundSheet) {
     devFundSheet = ss.insertSheet(config.devFund);
     devFundSheet
-      .getRange(1, 1, 1, 6)
+      .getRange(1, 1, 1, 8)
       .setValues([
-        ["Expense_ID", "Month", "Year", "Description", "Amount", "Date_Added"],
+        [
+          "Expense_ID",
+          "Month",
+          "Year",
+          "Title",
+          "Description",
+          "Scope",
+          "Amount",
+          "Date_Added",
+        ],
       ]);
-    devFundSheet.getRange(1, 1, 1, 6).setFontWeight("bold");
+    devFundSheet.getRange(1, 1, 1, 8).setFontWeight("bold");
   }
 
   // Generate new expense ID
   const data = devFundSheet.getDataRange().getValues();
   let maxNum = 0;
-  const prefix = branch === "Herohalli" ? "DEV-H-" : "DEV-M-";
+  const prefix = "DEV-";
 
   for (let i = 1; i < data.length; i++) {
     const id = String(data[i][0]);
     if (id.startsWith(prefix)) {
-      const num = parseInt(id.replace(prefix, ""));
+      const numPart = id.replace(/DEV-[A-Z]?-?/, "");
+      const num = parseInt(numPart);
       if (num > maxNum) maxNum = num;
     }
   }
@@ -1046,12 +1255,14 @@ function addDevelopmentExpense(branch, month, description, amount) {
   const newId = prefix + String(maxNum + 1).padStart(3, "0");
   const dateAdded = new Date().toISOString().split("T")[0];
 
-  // Add expense row
+  // Add expense row with new structure
   devFundSheet.appendRow([
     newId,
     month,
     CONFIG.year,
+    title,
     description,
+    scope,
     amount,
     dateAdded,
   ]);
@@ -1060,10 +1271,53 @@ function addDevelopmentExpense(branch, month, description, amount) {
     id: newId,
     month: month,
     year: CONFIG.year,
+    title: title,
     description: description,
+    scope: scope,
     amount: amount,
     dateAdded: dateAdded,
   };
+}
+
+/**
+ * Delete a development expense (only within 24 hours of creation)
+ */
+function deleteDevelopmentExpense(expenseId) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Search in both branch sheets
+  const branches = ["Herohalli", "MPSC"];
+  for (const branch of branches) {
+    const config = CONFIG.branches[branch];
+    if (!config) continue;
+
+    const devFundSheet = ss.getSheetByName(config.devFund);
+    if (!devFundSheet) continue;
+
+    const data = devFundSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === expenseId) {
+        // Check if within 24 hours
+        const dateAddedStr = data[i][7] || data[i][5]; // New format col 7, old format col 5
+        const dateAdded = new Date(dateAddedStr);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - dateAdded.getTime()) / (1000 * 60 * 60);
+
+        if (hoursDiff > 24) {
+          throw new Error(
+            "Cannot delete expense. Expenses can only be deleted within 24 hours of creation.",
+          );
+        }
+
+        // Delete the row
+        devFundSheet.deleteRow(i + 1);
+
+        return { success: true, id: expenseId };
+      }
+    }
+  }
+
+  throw new Error("Expense not found: " + expenseId);
 }
 
 // ============================================
@@ -1330,6 +1584,57 @@ function markStudentPaidWithCredit(studentId, branch, month, creditId) {
   }
 
   return paymentResult;
+}
+
+// ============================================
+// DEBUG FUNCTION - Check Fees Sheet Structure
+// ============================================
+function debugFeesSheet(branch) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const config = CONFIG.branches[branch] || CONFIG.branches["Herohalli"];
+  
+  const feesSheet = ss.getSheetByName(config.fees);
+  if (!feesSheet) {
+    return { error: "Fees sheet not found: " + config.fees };
+  }
+  
+  const feesData = feesSheet.getDataRange().getValues();
+  const headers = feesData[0];
+  
+  // Find Jan column by looking at headers
+  let janColIndex = -1;
+  for (let i = 0; i < headers.length; i++) {
+    if (String(headers[i]).trim().toLowerCase() === "jan") {
+      janColIndex = i;
+      break;
+    }
+  }
+  
+  // Get first 3 data rows with all their data
+  const sampleRows = [];
+  for (let i = 1; i < Math.min(4, feesData.length); i++) {
+    const row = feesData[i];
+    sampleRows.push({
+      id: row[0],
+      name: row[1],
+      fee: row[2],
+      year: row[3],
+      col4_value: row[4],
+      col5_value: row[5],
+      janCol_value: janColIndex >= 0 ? row[janColIndex] : "not found"
+    });
+  }
+  
+  return {
+    sheetName: config.fees,
+    totalColumns: headers.length,
+    headers: headers,
+    configMonthStart: CONFIG.monthStart,
+    janColumnIndex: janColIndex,
+    expectedJanIndex: CONFIG.monthStart,
+    mismatch: janColIndex !== CONFIG.monthStart,
+    sampleRows: sampleRows
+  };
 }
 
 // ============================================
