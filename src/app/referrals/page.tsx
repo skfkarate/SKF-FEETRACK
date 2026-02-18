@@ -82,7 +82,7 @@ export default function ReferralCreditsPage() {
     try {
       const studentList = await getStudents(branch, new Date().getMonth());
       setStudents(studentList.filter((s) => s.status === "Active"));
-    } catch (err) {
+    } catch (_err) {
       alert("Failed to load students");
     } finally {
       setLoadingStudents(false);
@@ -154,8 +154,8 @@ export default function ReferralCreditsPage() {
           <button
             onClick={() => setBranch("Herohalli")}
             className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${branch === "Herohalli"
-                ? "bg-red-600 border-red-600 text-white"
-                : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
+              ? "bg-red-600 border-red-600 text-white"
+              : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
               }`}
           >
             Herohalli
@@ -163,8 +163,8 @@ export default function ReferralCreditsPage() {
           <button
             onClick={() => setBranch("MPSC")}
             className={`flex-1 py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all border ${branch === "MPSC"
-                ? "bg-red-600 border-red-600 text-white"
-                : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
+              ? "bg-red-600 border-red-600 text-white"
+              : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600"
               }`}
           >
             MP Sports Club
@@ -227,8 +227,8 @@ export default function ReferralCreditsPage() {
                       <div
                         key={credit.id}
                         className={`bg-[#1a1a1a] border p-4 ${credit.isUsed
-                            ? "border-[#333] opacity-60"
-                            : "border-green-600/50"
+                          ? "border-[#333] opacity-60"
+                          : "border-green-600/50"
                           }`}
                       >
                         <div className="grid grid-cols-2 gap-y-4 gap-x-2">
@@ -276,8 +276,8 @@ export default function ReferralCreditsPage() {
                             </p>
                             <p
                               className={`font-[family-name:var(--font-oswald)] text-xl ${credit.isUsed
-                                  ? "text-gray-500"
-                                  : "text-green-400"
+                                ? "text-gray-500"
+                                : "text-green-400"
                                 }`}
                             >
                               ₹{credit.amount.toLocaleString()}

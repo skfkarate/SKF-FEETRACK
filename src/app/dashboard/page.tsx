@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Wallet, MessageSquare } from "lucide-react";
 
 const MONTHS = [
@@ -20,26 +21,30 @@ const MONTHS = [
   "Dec",
 ];
 
+function getAuthenticatedUser(): string | null {
+  if (typeof window === "undefined") return null;
+  const storedUser = localStorage.getItem("skf_user");
+  const loginTime = localStorage.getItem("skf_login_time");
+  if (
+    !storedUser ||
+    !loginTime ||
+    Date.now() - parseInt(loginTime) > 30 * 60 * 1000
+  ) {
+    return null;
+  }
+  return storedUser;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<string | null>(null);
+  const [user] = useState<string | null>(() => getAuthenticatedUser());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("skf_user");
-    const loginTime = localStorage.getItem("skf_login_time");
-
-    // Check session (30 min expiry)
-    if (
-      !storedUser ||
-      !loginTime ||
-      Date.now() - parseInt(loginTime) > 30 * 60 * 1000
-    ) {
+    if (!user) {
       router.push("/");
-      return;
     }
-    setUser(storedUser);
-  }, [router]);
+  }, [user, router]);
 
   const handleLogout = () => {
     localStorage.removeItem("skf_user");
@@ -60,9 +65,11 @@ export default function DashboardPage() {
       <header className="bg-[#1a1a1a] border-b border-[#333] px-4 py-4 sticky top-0 z-50">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img
+            <Image
               src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
               alt="SKF"
+              width={32}
+              height={32}
               className="w-8 h-8 object-contain"
             />
             <h1 className="font-[family-name:var(--font-oswald)] text-xl font-bold tracking-wider">
@@ -101,11 +108,10 @@ export default function DashboardPage() {
                 onClick={() => setSelectedMonth(idx)}
                 className={`py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase 
                            transition-all duration-200 border
-                           ${
-                             selectedMonth === idx
-                               ? "bg-red-600 border-red-600 text-white"
-                               : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600 hover:text-white"
-                           }`}
+                           ${selectedMonth === idx
+                    ? "bg-red-600 border-red-600 text-white"
+                    : "bg-[#1a1a1a] border-[#333] text-gray-400 hover:border-red-600 hover:text-white"
+                  }`}
               >
                 {month}
               </button>

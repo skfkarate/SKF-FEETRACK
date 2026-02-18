@@ -34,16 +34,15 @@ export default function MonthlyFeeReceipt({
   onClose,
 }: MonthlyFeeReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const receiptIdRef = useRef(Math.floor(Math.random() * 10000).toString().padStart(4, '0'));
 
   const branchName =
     branch === "MPSC" ? "MP Sports Club" : branch?.toUpperCase();
 
   const { receiptNo, date, purpose, amountWords } = useMemo(() => {
-    const now = Date.now();
-    const today = new Date();
     return {
-      receiptNo: `SKF-${branch.substring(0, 1).toUpperCase()}-${now.toString().slice(-4)}`,
-      date: today.toLocaleDateString("en-IN", {
+      receiptNo: `SKF-${branch.substring(0, 1).toUpperCase()}-${receiptIdRef.current}`,
+      date: new Date().toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "long",
         year: "numeric",

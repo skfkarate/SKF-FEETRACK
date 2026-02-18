@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // Valid credentials (same as original)
 const VALID_USERS = ["krish", "usha"];
@@ -33,10 +34,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="relative w-32 h-32 mx-auto mb-6">
-          <img
+          <Image
             src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
             alt="SKF Karate Logo"
-            className="object-contain w-full h-full"
+            fill
+            className="object-contain"
           />
         </div>
         <h1 className="font-[family-name:var(--font-oswald)] text-5xl font-bold tracking-widest mb-2">
