@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Gift, X, CheckCircle2, Clock } from "lucide-react";
 import {
   getReferralCredits,
   addReferralCredit,
   getStudents,
   ReferralCreditsData,
-
+  ReferralCredit,
   Student,
 } from "@/lib/api";
 
@@ -43,9 +43,13 @@ export default function ReferralCreditsPage() {
     studentId: "",
     amount: 500,
     reason: "",
+    description: "",
     usedInMonth: "",
   });
   const [adding, setAdding] = useState(false);
+
+  // Detail Modal
+  const [selectedCredit, setSelectedCredit] = useState<ReferralCredit | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("skf_user");
@@ -112,11 +116,12 @@ export default function ReferralCreditsPage() {
         newCredit.studentId,
         newCredit.amount,
         newCredit.reason,
+        newCredit.description, // description
         usedMonth,
         usedDate,
       );
       setShowAddModal(false);
-      setNewCredit({ studentId: "", amount: 500, reason: "", usedInMonth: "" });
+      setNewCredit({ studentId: "", amount: 500, reason: "", description: "", usedInMonth: "" });
       loadData();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to add credit");
@@ -223,9 +228,10 @@ export default function ReferralCreditsPage() {
                     .map((credit) => (
                       <div
                         key={credit.id}
-                        className={`glass-card p-4 transition-all duration-200 ${credit.isUsed
-                          ? "opacity-50"
-                          : ""
+                        onClick={() => setSelectedCredit(credit)}
+                        className={`glass-card p-4 transition-all duration-200 cursor-pointer ${credit.isUsed
+                          ? "opacity-50 hover:opacity-75"
+                          : "hover:border-green-400/30"
                           }`}
                         style={!credit.isUsed ? { borderColor: "rgba(34, 197, 94, 0.3)" } : undefined}
                       >
@@ -281,6 +287,14 @@ export default function ReferralCreditsPage() {
                               ₹{credit.amount.toLocaleString()}
                             </p>
                           </div>
+
+                          {credit.description && (
+                            <div className="col-span-2 mt-2 pt-2 border-t border-white/5">
+                              <p className="text-[var(--text-muted)] text-xs truncate">
+                                {credit.description}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
@@ -293,7 +307,7 @@ export default function ReferralCreditsPage() {
 
       {/* Add Credit Modal */}
       {showAddModal && (
-        <div className="glass-modal-overlay">
+        <div className="glass-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowAddModal(false)}>
           <div className="glass-modal !max-w-sm">
             <div className="p-6">
               <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-6 text-center">
@@ -400,6 +414,19 @@ export default function ReferralCreditsPage() {
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Description
+                  </label>
+                  <textarea
+                    value={newCredit.description}
+                    onChange={(e) => setNewCredit({ ...newCredit, description: e.target.value })}
+                    placeholder="Additional notes..."
+                    rows={3}
+                    className="input-field resize-none"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3 mt-6">
@@ -423,6 +450,102 @@ export default function ReferralCreditsPage() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Detail Modal */}
+      {selectedCredit && (
+        <div className="glass-modal-overlay" onClick={(e) => e.target === e.currentTarget && setSelectedCredit(null)}>
+          <div className="glass-modal !max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-purple-400" /> CREDIT DETAILS
+                </h2>
+                <button
+                  onClick={() => setSelectedCredit(null)}
+                  className="text-[var(--text-muted)] hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Status Badge */}
+              <div className="flex justify-center mb-5">
+                <span
+                  className={`text-xs px-4 py-1.5 border rounded-full font-medium tracking-wide ${selectedCredit.isUsed
+                      ? "bg-green-600/20 text-green-400 border-green-600/50"
+                      : "bg-purple-600/20 text-purple-400 border-purple-600/50"
+                    }`}
+                >
+                  {selectedCredit.isUsed ? "✓ Used" : "● Available"}
+                </span>
+              </div>
+
+              {/* Amount */}
+              <div className="text-center mb-6">
+                <p className={`font-[family-name:var(--font-space)] text-3xl ${selectedCredit.isUsed ? "text-green-400" : "text-purple-400"
+                  }`}>
+                  ₹{selectedCredit.amount.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Details Grid */}
+              <div className="space-y-3">
+                <div className="glass-surface p-3 rounded-lg">
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Student</p>
+                  <p className="text-white text-sm font-medium">{selectedCredit.studentName}</p>
+                  <p className="text-[var(--text-muted)] text-xs">ID: {selectedCredit.studentId}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="glass-surface p-3 rounded-lg">
+                    <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Credit ID</p>
+                    <p className="text-white text-sm font-mono">{selectedCredit.id}</p>
+                  </div>
+                  <div className="glass-surface p-3 rounded-lg">
+                    <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Reason</p>
+                    <p className="text-white text-sm">{selectedCredit.reason}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="glass-surface p-3 rounded-lg">
+                    <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Date Earned</p>
+                    <p className="text-white text-sm">{selectedCredit.dateEarned}</p>
+                  </div>
+                  {selectedCredit.isUsed && selectedCredit.usedDate && (
+                    <div className="glass-surface p-3 rounded-lg">
+                      <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Date Applied</p>
+                      <p className="text-green-400 text-sm">{selectedCredit.usedDate}</p>
+                    </div>
+                  )}
+                  {selectedCredit.isUsed && selectedCredit.usedInMonth !== null && (
+                    <div className="glass-surface p-3 rounded-lg">
+                      <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Applied For</p>
+                      <p className="text-green-400 text-sm">
+                        {MONTHS[selectedCredit.usedInMonth] || "Unknown"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedCredit.description && (
+                  <div className="glass-surface p-3 rounded-lg">
+                    <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">Description</p>
+                    <p className="text-white text-sm whitespace-pre-wrap">{selectedCredit.description}</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setSelectedCredit(null)}
+                className="w-full mt-6 btn-ghost font-[family-name:var(--font-space)] tracking-wider text-sm"
+              >
+                CLOSE
+              </button>
             </div>
           </div>
         </div>

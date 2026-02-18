@@ -13,6 +13,8 @@ import {
   X,
   PiggyBank,
   Wallet,
+  Ticket,
+  Shirt,
 } from "lucide-react";
 
 import MonthSelector from "@/components/common/MonthSelector";
@@ -197,6 +199,36 @@ export default function FinancesPage() {
                     Tap to view details
                   </p>
                 </div>
+
+                <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <Ticket className="w-12 h-12 text-blue-400" />
+                  </div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <Ticket className="w-3 h-3" /> Admission
+                  </p>
+                  <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-blue-400">
+                    ₹{data.admissionCollected?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                    Collected this month
+                  </p>
+                </div>
+
+                <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(236, 72, 153, 0.25)" }}>
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <Shirt className="w-12 h-12 text-pink-400" />
+                  </div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <Shirt className="w-3 h-3" /> Dress Profit
+                  </p>
+                  <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-pink-400">
+                    ₹{data.dressProfit?.toLocaleString() || 0}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                    Margin from dress fees
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -327,7 +359,7 @@ export default function FinancesPage() {
 
       {/* Credit Details Modal */}
       {showCreditDetails && data && (
-        <div className="glass-modal-overlay">
+        <div className="glass-modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowCreditDetails(false)}>
           <div className="glass-modal">
             <div className="p-6 relative">
               <button
@@ -352,6 +384,16 @@ export default function FinancesPage() {
                         <p className="font-bold text-white text-sm">
                           {credit.studentName}
                         </p>
+                        {credit.reason && (
+                          <p className="text-xs text-purple-400/70">
+                            {credit.reason}
+                          </p>
+                        )}
+                        {credit.description && (
+                          <p className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-1">
+                            {credit.description}
+                          </p>
+                        )}
                         <p className="text-xs text-[var(--text-muted)]">
                           Date: {credit.date}
                         </p>

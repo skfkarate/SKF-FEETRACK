@@ -14,7 +14,9 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Ticket,
+  Shirt,
 } from "lucide-react";
 
 import {
@@ -27,6 +29,7 @@ import {
   markPaidWithCredit,
   Student,
   StudentCredits,
+  markNonRecurringFeePaid,
 } from "@/lib/api";
 
 import MonthlyFeeReceipt from "@/components/receipts/MonthlyFeeReceipt";
@@ -77,6 +80,11 @@ export default function StudentList({ branch }: { branch: string }) {
     fee: 500,
     phone: "",
     joinMonth: 0,
+    admissionFee: 1000, // Default Admission Fee
+    admissionPaid: true,
+    dressFee: 1500, // Default Dress Fee
+    dressCost: 1000, // Default Dress Cost
+    dressPaid: true,
   });
   const [adding, setAdding] = useState(false);
 
@@ -95,6 +103,13 @@ export default function StudentList({ branch }: { branch: string }) {
     useState<Student | null>(null);
   const [confirmDiscontinuedStudent, setConfirmDiscontinuedStudent] =
     useState<Student | null>(null);
+
+  // New Fee Payment Confirmation
+  const [confirmFeePayment, setConfirmFeePayment] = useState<{
+    student: Student;
+    type: "Admission" | "Dress";
+  } | null>(null);
+
   const [markingStatus, setMarkingStatus] = useState<string | null>(null);
 
   const month = parseInt(
@@ -282,6 +297,30 @@ export default function StudentList({ branch }: { branch: string }) {
     }
   };
 
+  const handleMarkNonRecurringPaid = async () => {
+    if (!confirmFeePayment) return;
+    setMarkingStatus(confirmFeePayment.student.id);
+    const { student, type } = confirmFeePayment;
+    setConfirmFeePayment(null);
+
+    try {
+      await markNonRecurringFeePaid(student.id, branch, type);
+      setStudents((prev) =>
+        prev.map((s) => {
+          if (s.id === student.id) {
+            if (type === "Admission") return { ...s, admissionStatus: "Paid" };
+            if (type === "Dress") return { ...s, dressStatus: "Paid" };
+          }
+          return s;
+        })
+      );
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to mark as paid");
+    } finally {
+      setMarkingStatus(null);
+    }
+  };
+
   // Add new student
   const handleAddStudent = async () => {
     if (!newStudent.skfId.trim()) {
@@ -301,6 +340,11 @@ export default function StudentList({ branch }: { branch: string }) {
         newStudent.fee,
         newStudent.phone,
         newStudent.joinMonth,
+        newStudent.admissionFee,
+        newStudent.admissionPaid,
+        newStudent.dressFee,
+        newStudent.dressCost,
+        newStudent.dressPaid
       );
       setShowAddModal(false);
       setNewStudent({
@@ -309,6 +353,11 @@ export default function StudentList({ branch }: { branch: string }) {
         fee: 500,
         phone: "",
         joinMonth: month,
+        admissionFee: 1000,
+        admissionPaid: true,
+        dressFee: 1500,
+        dressCost: 1000,
+        dressPaid: true,
       });
       loadStudents(); // Reload list
     } catch (err) {
@@ -556,6 +605,24 @@ export default function StudentList({ branch }: { branch: string }) {
                           <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] bg-purple-500/10 text-purple-300 px-2 py-1 rounded-md border border-purple-500/20">
                             <Gift className="w-3 h-3" />
                             <span>Credit Applied: ₹{student.creditApplied}</span>
+                          </div>
+                        )}
+
+                        {/* Pending Admission/Dress Badges */}
+                        {(student.admissionStatus === "Pending" || student.dressStatus === "Pending") && (
+                          <div className="mt-2 flex gap-2 flex-wrap">
+                            {student.admissionStatus === "Pending" && (
+                              <div className="inline-flex items-center gap-1.5 text-[10px] bg-blue-500/10 text-blue-300 px-2 py-1 rounded-md border border-blue-500/20">
+                                <Ticket className="w-3 h-3" />
+                                <span>Adm Due</span>
+                              </div>
+                            )}
+                            {student.dressStatus === "Pending" && (
+                              <div className="inline-flex items-center gap-1.5 text-[10px] bg-pink-500/10 text-pink-300 px-2 py-1 rounded-md border border-pink-500/20">
+                                <Shirt className="w-3 h-3" />
+                                <span>Dress Due</span>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -818,6 +885,97 @@ export default function StudentList({ branch }: { branch: string }) {
                     Fees will only be calculated from this month onwards
                   </p>
                 </div>
+
+                {/* Admission Fee */}
+                <div className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                  <div className="flex-1">
+                    <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                      Admission Fee
+                    </label>
+                    <input
+                      type="number"
+                      value={newStudent.admissionFee}
+                      onChange={(e) =>
+                        setNewStudent({
+                          ...newStudent,
+                          admissionFee: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="input-field"
+                    />
+                  </div>
+                  <div className="flex items-end mb-2">
+                    <label className="flex items-center gap-2 cursor-pointer bg-black/40 px-3 py-2 rounded-md border border-white/10 hover:bg-black/60 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={newStudent.admissionPaid}
+                        onChange={(e) =>
+                          setNewStudent({
+                            ...newStudent,
+                            admissionPaid: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 accent-green-500 rounded cursor-pointer"
+                      />
+                      <span className="text-sm">Paid Now?</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Dress Fee */}
+                <div className="flex flex-col gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                        Dress Fee
+                      </label>
+                      <input
+                        type="number"
+                        value={newStudent.dressFee}
+                        onChange={(e) =>
+                          setNewStudent({
+                            ...newStudent,
+                            dressFee: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="input-field"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium text-amber-500">
+                        Dress Cost
+                      </label>
+                      <input
+                        type="number"
+                        value={newStudent.dressCost}
+                        onChange={(e) =>
+                          setNewStudent({
+                            ...newStudent,
+                            dressCost: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="input-field !border-amber-500/30 focus:!border-amber-500/60"
+                        placeholder="Cost"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <label className="flex items-center gap-2 cursor-pointer bg-black/40 px-3 py-2 rounded-md border border-white/10 hover:bg-black/60 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={newStudent.dressPaid}
+                        onChange={(e) =>
+                          setNewStudent({
+                            ...newStudent,
+                            dressPaid: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 accent-green-500 rounded cursor-pointer"
+                      />
+                      <span className="text-sm">Paid Now?</span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-3 mt-6">
@@ -867,6 +1025,47 @@ export default function StudentList({ branch }: { branch: string }) {
                 </p>
               </div>
             </button>
+
+            {longPressStudent.admissionStatus === "Pending" && (
+              <button
+                onClick={() => {
+                  setShowStatusMenu(false);
+                  setConfirmFeePayment({ student: longPressStudent, type: "Admission" });
+                }}
+                className="w-full text-left px-4 py-4 text-blue-400 hover:bg-white/5 transition-colors flex items-center gap-3 border-t border-[var(--border)]"
+              >
+                <Ticket className="w-5 h-5" />
+                <div>
+                  <p className="font-[family-name:var(--font-space)] tracking-wider text-sm">
+                    MARK ADMISSION PAID
+                  </p>
+                  <p className="text-[var(--text-muted)] text-xs">
+                    Collect ₹{longPressStudent.admissionFee || 0}
+                  </p>
+                </div>
+              </button>
+            )}
+
+            {longPressStudent.dressStatus === "Pending" && (
+              <button
+                onClick={() => {
+                  setShowStatusMenu(false);
+                  setConfirmFeePayment({ student: longPressStudent, type: "Dress" });
+                }}
+                className="w-full text-left px-4 py-4 text-pink-400 hover:bg-white/5 transition-colors flex items-center gap-3 border-t border-[var(--border)]"
+              >
+                <Shirt className="w-5 h-5" />
+                <div>
+                  <p className="font-[family-name:var(--font-space)] tracking-wider text-sm">
+                    MARK DRESS PAID
+                  </p>
+                  <p className="text-[var(--text-muted)] text-xs">
+                    Collect ₹{longPressStudent.dressFee || 0}
+                  </p>
+                </div>
+              </button>
+            )}
+
             <button
               onClick={handleDiscontinuedClick}
               className="w-full text-left px-4 py-4 text-gray-400 hover:bg-white/5 transition-colors flex items-center gap-3 border-t border-[var(--border)]"
@@ -982,6 +1181,44 @@ export default function StudentList({ branch }: { branch: string }) {
             setReceiptStudent(null);
           }}
         />
+      )}
+      {/* Confirm Fee Payment Modal */}
+      {confirmFeePayment && (
+        <div className="glass-modal-overlay">
+          <div className="glass-modal">
+            <div className="p-6">
+              <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-4 text-center">
+                CONFIRM {confirmFeePayment.type.toUpperCase()} FEE
+              </h2>
+              <div className="glass-surface p-4 mb-6">
+                <p className="text-[var(--text-muted)] text-xs mb-1">Student</p>
+                <p className="font-[family-name:var(--font-space)] text-lg">
+                  {confirmFeePayment.student.name}
+                </p>
+                <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                  <p className="text-[var(--text-muted)] text-xs mb-1">Amount to Collect</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    ₹{confirmFeePayment.type === "Admission" ? confirmFeePayment.student.admissionFee : confirmFeePayment.student.dressFee}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmFeePayment(null)}
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleMarkNonRecurringPaid}
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-green-500 transition-colors"
+                >
+                  ✓ CONFIRM PAID
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

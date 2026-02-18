@@ -29,6 +29,11 @@ function setupAllSheets() {
     "Email",
     "JoinMonth",
     "EndMonth",
+    "Admission_Fee",
+    "Admission_Status",
+    "Dress_Fee",
+    "Dress_Cost",
+    "Dress_Status",
   ]);
   createSheetIfNotExists(ss, "DB_MP", [
     "SKF_ID",
@@ -42,6 +47,11 @@ function setupAllSheets() {
     "Email",
     "JoinMonth",
     "EndMonth",
+    "Admission_Fee",
+    "Admission_Status",
+    "Dress_Fee",
+    "Dress_Cost",
+    "Dress_Status",
   ]);
 
   // Create Fees sheets
@@ -82,23 +92,21 @@ function setupAllSheets() {
     "Dec",
   ]);
 
-  // Create Development Fund sheets for tracking 30% allocation expenses
-  createSheetIfNotExists(ss, "DevFund_Herohalli", [
+  // Create Development Fund sheet (Unified)
+  createSheetIfNotExists(ss, "DevFund", [
     "Expense_ID",
     "Month",
     "Year",
+    "Title",
     "Description",
+    "Branch", // Scope
     "Amount",
     "Date_Added",
   ]);
-  createSheetIfNotExists(ss, "DevFund_MP", [
-    "Expense_ID",
-    "Month",
-    "Year",
-    "Description",
-    "Amount",
-    "Date_Added",
-  ]);
+
+  // Create Development Fund sheets for tracking 30% allocation expenses - DEPRECATED but kept for reference if needed
+  // createSheetIfNotExists(ss, "DevFund_Herohalli", ...);
+
 
   // Create Referral Credits sheets for tracking referral bonuses
   createSheetIfNotExists(ss, "ReferralCredits_Herohalli", [
@@ -161,6 +169,11 @@ function addSampleData(ss) {
 // CONFIGURATION
 // ============================================
 const CONFIG = {
+  year: "2026",
+  monthStart: 4, // Column E (0-indexed: A=0, B=1, C=2, D=3, E=4) - fallback value
+  devFundPercent: 0.30, // 30% of collected fees goes to development fund
+  devFundSheet: "DevFund", // New unified sheet
+  defaultReferralCredit: 500, // Default referral bonus amount
   branches: {
     Herohalli: {
       db: "DB_Herohalli",
@@ -330,6 +343,7 @@ function doPost(e) {
           payload.reason,
           payload.usedInMonth,
           payload.usedDate,
+          payload.description,
         );
         break;
       case "apply_referral_credit":
@@ -353,6 +367,14 @@ function doPost(e) {
       // Financial Summary
       case "get_financial_summary":
         result = getFinancialSummary(payload.branch, payload.month);
+        break;
+      
+      case "mark_non_recurring_paid":
+        result = markNonRecurringFeePaid(
+          payload.studentId,
+          payload.branch,
+          payload.feeType
+        );
         break;
       
       // Debug - show raw fees data structure
@@ -440,12 +462,19 @@ function getStudentsWithPaymentStatus(branch, month) {
     const id = String(row[0]).trim();
     if (!id) continue;
 
-    // Column indices for 11-column structure:
     // 0=SKF_ID, 1=Student_Name, 2=Parent_Guardian, 3=Status, 4=Monthly_Fee,
     // 5=Phone, 6=WhatsApp, 7=Date_of_Birth, 8=Email, 9=JoinMonth, 10=EndMonth
+    // 11=AdmFee, 12=AdmStatus, 13=DressFee, 14=DressCost, 15=DressStatus
     const joinMonth = parseInt(row[9]) || 0;
     const endMonth =
       row[10] !== "" && row[10] !== undefined ? parseInt(row[10]) : -1;
+      
+    // New Fee Data
+    const admissionFee = Number(row[11]) || 0;
+    const admissionStatus = String(row[12]).trim() || "Pending";
+    const dressFee = Number(row[13]) || 0;
+    const dressCost = Number(row[14]) || 0;
+    const dressStatus = String(row[15]).trim() || "Pending";
 
     // Only include students who joined on or before this month
     if (joinMonth > month) continue;
@@ -468,7 +497,7 @@ function getStudentsWithPaymentStatus(branch, month) {
       id: id,
       name: row[1] || "",
       parentName: row[2] || "",
-      status: row[3] || "Active",
+      status: String(row[3]).trim() || "Active",
       fee: finalFee, // Reduced fee
       originalFee: originalFee, // Track original
       creditApplied: creditAmount, // Track credit
@@ -479,6 +508,14 @@ function getStudentsWithPaymentStatus(branch, month) {
       paid: isPaid,
       monthStatus: monthStatus,
       joinMonth: joinMonth,
+      monthStatus: monthStatus,
+      joinMonth: joinMonth,
+      // New fields
+      admissionFee: admissionFee,
+      admissionStatus: admissionStatus,
+      dressFee: dressFee,
+      dressCost: dressCost,
+      dressStatus: dressStatus,
     });
   }
 
@@ -570,6 +607,11 @@ function addNewStudent(payload) {
     payload.email || "",
     joinMonth,
     "", // EndMonth - empty for new students
+    payload.admissionFee || 0,
+    payload.admissionPaid ? "Paid" : "Pending",
+    payload.dressFee || 0,
+    payload.dressCost || 0,
+    payload.dressPaid ? "Paid" : "Pending",
   ]);
 
   // Add to Fees - mark months before joinMonth as "N/A" (not applicable)
@@ -760,6 +802,30 @@ function markStudentDiscontinued(studentId, branch, month) {
 
   return { id: studentId, month: month, status: "discontinued" };
 }
+/**
+ * Mark a non-recurring fee (Admission or Dress) as Paid
+ */
+function markNonRecurringFeePaid(studentId, branch, feeType) {
+  const ss = getSpreadsheet();
+  const config = CONFIG.branches[branch];
+  
+  if (!config) throw new Error("Invalid branch: " + branch);
+  
+  const dbSheet = ss.getSheetByName(config.db);
+  if (!dbSheet) throw new Error("DB sheet not found");
+  
+  const data = dbSheet.getDataRange().getValues();
+  const colIndex = feeType === "Admission" ? 12 : 15; // 12=AdmStatus, 15=DressStatus (0-indexed)
+  
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === studentId) {
+      dbSheet.getRange(i + 1, colIndex + 1).setValue("Paid"); // +1 for 1-based index
+      return { success: true };
+    }
+  }
+  
+  throw new Error("Student not found");
+}
 
 // ============================================
 // FINANCIAL SUMMARY FUNCTION
@@ -804,6 +870,8 @@ function getFinancialSummary(branch, month) {
           creditDetails.push({
             studentName: refData[i][2],
             amount: amount,
+            reason: refData[i][4] || "",
+            description: refData[i][8] || "",
             date: refData[i][7], // Used date
           });
         }
@@ -846,6 +914,37 @@ function getFinancialSummary(branch, month) {
 
     if (month === -1) {
       devFundAllocation = cumulativeAllocation;
+    }
+  }
+
+  // 4. NEW: Calculate Admission and Dress Fees (One-time)
+  let admissionCollected = 0;
+  let dressProfit = 0; // (Fee - Cost)
+  
+  const dbSheet = ss.getSheetByName(config.db);
+  if (dbSheet) {
+    const dbData = dbSheet.getDataRange().getValues();
+    // Indices: 9=JoinMonth, 11=AdmFee, 12=AdmStatus, 13=DressFee, 14=DressCost, 15=DressStatus
+    
+    for (let i = 1; i < dbData.length; i++) {
+        const row = dbData[i];
+        const joinMonth = parseInt(row[9]); // JoinMonth
+        
+        // Filter by month (if specific month requested)
+        if (month !== -1 && joinMonth !== month) continue;
+        if (isNaN(joinMonth)) continue; // Skip if no join month (likely old student)
+
+        // Admission Fee
+        if (String(row[12]).trim() === "Paid") {
+            admissionCollected += Number(row[11]) || 0;
+        }
+
+        // Dress Fee Margin
+        if (String(row[15]).trim() === "Paid") {
+            const fee = Number(row[13]) || 0;
+            const cost = Number(row[14]) || 0;
+            dressProfit += (fee - cost);
+        }
     }
   }
 
@@ -969,8 +1068,13 @@ function getFinancialSummary(branch, month) {
     creditDetails: creditDetails,
     actualReceived: actualReceived,
     devFundAllocation: devFundAllocation,
+    admissionCollected: admissionCollected,
+    dressProfit: dressProfit,
+    // Development Fund Data
     devFundSpent: devFundSpent,
-    devFundBalance: devFundBalance,
+    totalContributions: cumulativeAllocation,
+    availableBalance: devFundBalance,
+    yearlyBreakdown: [], // Not needed for this view
   };
 }
 
@@ -979,75 +1083,38 @@ function getFinancialSummary(branch, month) {
 // ============================================
 
 /**
- * HELPER: Get all development expenses from all sources (Unified)
+ * Get all development expenses from the unified sheet
  */
 function getAllDevelopmentExpenses() {
   const ss = getSpreadsheet();
+  const devSheet = ss.getSheetByName(CONFIG.devFundSheet || "DevFund");
   const allExpenses = [];
-  const branches = ["Herohalli", "MPSC"];
   
-  // Track processed IDs to avoid duplicates if we ever merge sheets
-  // Currently sheets are separate, so no ID collision expected unless manually duplicated
+  if (!devSheet) return [];
   
-  for (const branch of branches) {
-    const config = CONFIG.branches[branch];
-    if (!config) continue;
+  const data = devSheet.getDataRange().getValues();
+  // Header: Expense_ID, Month, Year, Title, Description, Branch, Amount, Date_Added
+  
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const id = String(row[0]).trim();
+    if (!id) continue;
     
-    const devFundSheet = ss.getSheetByName(config.devFund);
-    if (!devFundSheet) continue;
+    // Month is 1-based in sheet (1=Jan), 0-based in app (0=Jan)
+    const month = (parseInt(row[1]) || 1) - 1;
     
-    const devData = devFundSheet.getDataRange().getValues();
-    // Detect new format (8 columns) vs old (6 columns)
-    // New: ID, Month, Year, Title, Desc, Scope, Amount, Date
-    // Old: ID, Month, Year, Desc, Amount, Date
-    const headers = devData[0] || [];
-    const isNewFormat = headers.length >= 8 && String(headers[5]).toLowerCase().includes('scope');
-    
-    for (let i = 1; i < devData.length; i++) {
-      const row = devData[i];
-      const expenseId = String(row[0]).trim();
-      if (!expenseId) continue;
-
-      const expenseMonth = parseInt(row[1]) || 0;
-      const expenseYear = String(row[2]).trim();
-      
-      if (expenseYear !== CONFIG.year) continue; // Filter by current year context
-
-      let amount = 0;
-      let title = "";
-      let description = "";
-      let scope = branch; // Default to source branch
-      let dateAdded = "";
-      
-      if (isNewFormat) {
-        title = row[3] || "";
-        description = row[4] || "";
-        scope = row[5] || branch;
-        amount = Number(row[6]) || 0;
-        dateAdded = row[7] || "";
-      } else {
-        description = row[3] || "";
-        amount = Number(row[4]) || 0;
-        dateAdded = row[5] || "";
-        scope = branch; // Legacy data inherits branch from sheet name
-      }
-      
-      // Fallback amount check
-      if (amount === 0) amount = Number(row[6]) || Number(row[4]) || 0;
-
-      allExpenses.push({
-        id: expenseId,
-        month: expenseMonth,
-        year: expenseYear,
-        title: title || description, // Fallback title
-        description: description,
-        scope: scope,
-        amount: amount,
-        dateAdded: dateAdded,
-        sourceSheet: config.devFund, // metadata for debug/deletion if needed
-        rowIndex: i + 1
-      });
-    }
+    allExpenses.push({
+      id: id,
+      month: month,
+      year: String(row[2]),
+      title: String(row[3]),
+      description: String(row[4]),
+      scope: String(row[5]) || "Both", // Default to Both if missing
+      amount: Number(row[6]) || 0,
+      dateAdded: row[7] instanceof Date ? row[7].toISOString() : String(row[7]),
+      sourceSheet: CONFIG.devFundSheet,
+      rowIndex: i + 1
+    });
   }
   
   return allExpenses;
@@ -1130,16 +1197,8 @@ function getDevelopmentFundData(branch) {
     const expScope = expense.scope || "Herohalli";
     if (expScope === branch) {
       return true; // 100% for this branch
-    } else if (expScope === "Both" || expScope === "Others" || !["Herohalli", "MPSC"].includes(expScope)) {
-      // For shared expenses, only count half for this branch's specific view
-      // This is a design choice for how a "branch specific" view should handle shared costs.
-      // For simplicity, we'll include them fully here and let the unified view handle the split.
-      // Or, for a true "branch specific" view, we might only show expenses explicitly scoped to it.
-      // Let's stick to the original intent of this function: what *this branch* spent.
-      // So, only expenses explicitly for this branch, or half of "Both" if we want to attribute.
-      // For now, let's assume this function is for *direct* expenses of the branch.
-      // If "Both" means 50/50, then this branch's view should reflect its 50% share.
-      return false; // This function is for direct expenses, not shared.
+    } else if (expScope === "Both" || expScope === "Others") {
+      return true; // Shared expense — include in both branches (attributed at 50%)
     }
     return false; // Not for this branch
   });
@@ -1292,13 +1351,13 @@ function getDevelopmentFundDataUnified() {
  */
 function addDevelopmentExpense(month, title, description, scope, amount) {
   const ss = getSpreadsheet();
-  const config = CONFIG.branches["Herohalli"]; // Store all in Herohalli sheet
+  const devFundSheetName = CONFIG.devFundSheet || "DevFund";
 
-  let devFundSheet = ss.getSheetByName(config.devFund);
+  let devFundSheet = ss.getSheetByName(devFundSheetName);
 
   // Create sheet if it doesn't exist with updated columns
   if (!devFundSheet) {
-    devFundSheet = ss.insertSheet(config.devFund);
+    devFundSheet = ss.insertSheet(devFundSheetName);
     devFundSheet
       .getRange(1, 1, 1, 8)
       .setValues([
@@ -1308,7 +1367,7 @@ function addDevelopmentExpense(month, title, description, scope, amount) {
           "Year",
           "Title",
           "Description",
-          "Scope",
+          "Scope", // Changed from "Branch" to "Scope" for consistency
           "Amount",
           "Date_Added",
         ],
@@ -1334,9 +1393,10 @@ function addDevelopmentExpense(month, title, description, scope, amount) {
   const dateAdded = new Date().toISOString().split("T")[0];
 
   // Add expense row with new structure
+  // Month is 0-based in app, 1-based in sheet
   devFundSheet.appendRow([
     newId,
-    month,
+    month + 1, 
     CONFIG.year,
     title,
     description,
@@ -1358,44 +1418,24 @@ function addDevelopmentExpense(month, title, description, scope, amount) {
 }
 
 /**
- * Delete a development expense (only within 24 hours of creation)
+ * Delete a development expense
  */
 function deleteDevelopmentExpense(expenseId) {
   const ss = getSpreadsheet();
+  const devSheet = ss.getSheetByName(CONFIG.devFundSheet || "DevFund");
+  
+  if (!devSheet) throw new Error("Development Fund sheet not found");
 
-  // Search in both branch sheets
-  const branches = ["Herohalli", "MPSC"];
-  for (const branch of branches) {
-    const config = CONFIG.branches[branch];
-    if (!config) continue;
-
-    const devFundSheet = ss.getSheetByName(config.devFund);
-    if (!devFundSheet) continue;
-
-    const data = devFundSheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (String(data[i][0]).trim() === expenseId) {
-        // Check if within 24 hours
-        const dateAddedStr = data[i][7] || data[i][5]; // New format col 7, old format col 5
-        const dateAdded = new Date(dateAddedStr);
-        const now = new Date();
-        const hoursDiff = (now.getTime() - dateAdded.getTime()) / (1000 * 60 * 60);
-
-        if (hoursDiff > 24) {
-          throw new Error(
-            "Cannot delete expense. Expenses can only be deleted within 24 hours of creation.",
-          );
-        }
-
-        // Delete the row
-        devFundSheet.deleteRow(i + 1);
-
-        return { success: true, id: expenseId };
-      }
+  const data = devSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === expenseId) {
+      devSheet.deleteRow(i + 1);
+      return { success: true };
     }
   }
-
-  throw new Error("Expense not found: " + expenseId);
+  
+  throw new Error("Expense not found");
 }
 
 // ============================================
@@ -1447,6 +1487,7 @@ function getReferralCredits(branch) {
       usedInMonth: isUsed ? parseInt(usedInMonth) : null,
       usedDate: row[7] || "",
       isUsed: isUsed,
+      description: row[8] || "",
     });
   }
 
@@ -1467,6 +1508,7 @@ function addReferralCredit(
   reason,
   usedInMonth,
   usedDate,
+  description,
 ) {
   const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
@@ -1494,7 +1536,7 @@ function addReferralCredit(
   if (!refSheet) {
     refSheet = ss.insertSheet(config.refCredits);
     refSheet
-      .getRange(1, 1, 1, 8)
+      .getRange(1, 1, 1, 9)
       .setValues([
         [
           "Credit_ID",
@@ -1505,9 +1547,10 @@ function addReferralCredit(
           "Date_Earned",
           "Used_In_Month",
           "Used_Date",
+          "Description",
         ],
       ]);
-    refSheet.getRange(1, 1, 1, 8).setFontWeight("bold");
+    refSheet.getRange(1, 1, 1, 9).setFontWeight("bold");
   }
 
   // Generate new credit ID
@@ -1543,6 +1586,7 @@ function addReferralCredit(
     dateEarned,
     usedMonthVal,
     usedDateVal,
+    description || "",
   ]);
 
   return {

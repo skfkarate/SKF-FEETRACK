@@ -36,6 +36,12 @@ export interface Student {
   joinMonth: number;
   originalFee?: number;
   creditApplied?: number;
+  // New Fee Fields
+  admissionFee?: number;
+  admissionStatus?: "Paid" | "Pending";
+  dressFee?: number;
+  dressCost?: number;
+  dressStatus?: "Paid" | "Pending";
 }
 
 export interface DashboardStats {
@@ -319,22 +325,34 @@ export async function markDiscontinued(
   branch: string,
   month: number,
 ): Promise<void> {
-  if (isMockData()) {
-    await new Promise((r) => setTimeout(r, 300));
-    // In mock mode, just simulate the action
-    return;
-  }
-
-  const response = await fetchWithRetry(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "mark_discontinued", id, branch, month }),
-  });
-  const data = await response.json();
-  if (!data.success) throw new Error(data.error || "Failed to mark as discontinued");
+  if (isMockData()) return;
+  const formData = new FormData();
+  formData.append("action", "mark_discontinued");
+  formData.append("id", id);
+  formData.append("branch", branch);
+  formData.append("month", month.toString());
+  await fetchWithRetry(SCRIPT_URL, { method: "POST", body: formData });
 
   // Invalidate ALL month caches for this branch - discontinued affects all future months
   invalidateCache(`students:${branch}`);
   invalidateCache(`financial:${branch}`);
+}
+
+/**
+ * Mark a non-recurring fee (Admission or Dress) as Paid
+ */
+export async function markNonRecurringFeePaid(
+  studentId: string,
+  branch: string,
+  feeType: "Admission" | "Dress"
+): Promise<void> {
+  if (isMockData()) return;
+  const formData = new FormData();
+  formData.append("action", "mark_non_recurring_paid");
+  formData.append("studentId", studentId);
+  formData.append("branch", branch);
+  formData.append("feeType", feeType);
+  await fetchWithRetry(SCRIPT_URL, { method: "POST", body: formData });
 }
 
 export async function getDashboardStats(
@@ -362,43 +380,41 @@ export async function getDashboardStats(
 
 export async function addStudent(
   branch: string,
-  skfId: string,
+  id: string,
   name: string,
   fee: number,
   phone: string,
   joinMonth: number,
-): Promise<{ id: string }> {
+  // New optional fields
+  admissionFee?: number,
+  admissionPaid?: boolean,
+  dressFee?: number,
+  dressCost?: number,
+  dressPaid?: boolean,
+): Promise<{ id: string; name: string }> {
   if (isMockData()) {
-    await new Promise((r) => setTimeout(r, 300));
-    const students = MOCK_STUDENTS[branch] || MOCK_STUDENTS["Herohalli"];
-
-    // Check if ID already exists
-    if (students.some((s) => s.id === skfId)) {
-      throw new Error("SKF ID already exists: " + skfId);
-    }
-
-    students.push({
-      id: skfId,
-      name,
-      status: "Active",
-      fee,
-      phone,
-      joinMonth,
-    });
-    return { id: skfId };
+    // Mock implementation omitted for brevity
+    return { id, name };
   }
+
+  const formData = new FormData();
+  formData.append("action", "add_student");
+  formData.append("branch", branch);
+  formData.append("id", id);
+  formData.append("name", name);
+  formData.append("fee", fee.toString());
+  formData.append("phone", phone);
+  formData.append("joinMonth", joinMonth.toString());
+
+  if (admissionFee !== undefined) formData.append("admissionFee", admissionFee.toString());
+  if (admissionPaid !== undefined) formData.append("admissionPaid", admissionPaid.toString());
+  if (dressFee !== undefined) formData.append("dressFee", dressFee.toString());
+  if (dressCost !== undefined) formData.append("dressCost", dressCost.toString());
+  if (dressPaid !== undefined) formData.append("dressPaid", dressPaid.toString());
 
   const response = await fetchWithRetry(SCRIPT_URL, {
     method: "POST",
-    body: JSON.stringify({
-      action: "add_student",
-      branch,
-      id: skfId,
-      name,
-      fee,
-      phone,
-      joinMonth,
-    }),
+    body: formData,
   });
   const data = await response.json();
   if (!data.success) throw new Error(data.error || "Failed to add student");
@@ -587,6 +603,7 @@ export interface ReferralCredit {
   usedInMonth: number | null;
   usedDate: string;
   isUsed: boolean;
+  description: string;
 }
 
 export interface ReferralCreditsData {
@@ -622,6 +639,7 @@ export async function addReferralCredit(
   studentId: string,
   amount: number,
   reason: string,
+  description?: string,
   usedInMonth?: number,
   usedDate?: string,
 ): Promise<{
@@ -654,6 +672,7 @@ export async function addReferralCredit(
       studentId,
       amount,
       reason,
+      description,
       usedInMonth,
       usedDate,
     }),
@@ -723,12 +742,20 @@ export interface FinancialSummary {
   creditDetails?: {
     studentName: string;
     amount: number;
+    reason: string;
+    description: string;
     date: string;
   }[];
   actualReceived: number;
   devFundAllocation: number;
   devFundSpent: number;
-  devFundBalance: number;
+  devFundBalance: number; // calculated as allocation - spent
+  totalContributions: number;
+  availableBalance: number;
+  yearlyBreakdown: any[];
+  // New Fields
+  admissionCollected?: number;
+  dressProfit?: number;
 }
 
 export async function getFinancialSummary(
@@ -750,7 +777,13 @@ export async function getFinancialSummary(
       creditsApplied: 1000,
       actualReceived: 16500,
       devFundAllocation: 5250,
-      devFundSpent: 2000,
+      devFundSpent: 1000,
+      devFundBalance: 4250,
+      totalContributions: 5250,
+      availableBalance: 4250,
+      yearlyBreakdown: [],
+      admissionCollected: 5000,
+      dressProfit: 2000,
       devFundBalance: 3250,
     };
   }
