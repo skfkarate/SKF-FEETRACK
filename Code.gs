@@ -202,13 +202,22 @@ const CONFIG = {
  * This ensures correct month column mapping regardless of sheet structure
  */
 function getJanColumnIndex(feesSheet) {
-  const headers = feesSheet.getRange(1, 1, 1, feesSheet.getLastColumn()).getValues()[0];
-  for (let i = 0; i < headers.length; i++) {
-    const header = String(headers[i]).trim().toLowerCase();
-    if (header === "jan" || header === "january") {
-      return i; // 0-indexed for array access
+  // Use getDataRange to get the actual data region
+  const data = feesSheet.getDataRange().getValues();
+  
+  // Search first 5 rows for the header
+  const limit = Math.min(data.length, 5);
+  
+  for (let r = 0; r < limit; r++) {
+    const row = data[r];
+    for (let c = 0; c < row.length; c++) {
+      const cell = String(row[c]).trim().toLowerCase();
+      if (cell === "jan" || cell === "january") {
+        return c; // 0-indexed column index
+      }
     }
   }
+  
   return CONFIG.monthStart; // fallback to config
 }
 
@@ -227,8 +236,18 @@ function doGet(e) {
       month = new Date().getMonth();
     }
 
-    const students = getStudentsWithPaymentStatus(branch, month);
-    return jsonResponse({ success: true, students: students });
+    const result = getStudentsWithPaymentStatus(branch, month);
+    return jsonResponse({ 
+      success: true, 
+      students: result.students,
+      debug: {
+        receivedParams: e.parameter,
+        parsedMonth: month,
+        janColumnIndex: result.janColIndex,
+        usedMonthColumn: result.monthCol,
+        configFallback: CONFIG.monthStart
+      }
+    });
   } catch (error) {
     return jsonResponse({ success: false, error: error.message });
   }
@@ -357,16 +376,8 @@ function getStudentsWithPaymentStatus(branch, month) {
   const dbData = dbSheet.getDataRange().getValues();
   const feesData = feesSheet.getDataRange().getValues();
   
-  // DYNAMIC JAN COLUMN DETECTION - Find 'Jan' header in fees sheet
-  const feesHeaders = feesData[0];
-  let janColIndex = CONFIG.monthStart; // fallback to config
-  for (let i = 0; i < feesHeaders.length; i++) {
-    const header = String(feesHeaders[i]).trim().toLowerCase();
-    if (header === "jan" || header === "january") {
-      janColIndex = i;
-      break;
-    }
-  }
+  // DYNAMIC JAN COLUMN DETECTION - Use shared helper function
+  const janColIndex = getJanColumnIndex(feesSheet);
 
   // Get Credits used in this month
   const creditsMap = {}; // studentId -> totalCreditAmount
@@ -452,7 +463,11 @@ function getStudentsWithPaymentStatus(branch, month) {
     });
   }
 
-  return students;
+  return {
+    students: students,
+    janColIndex: janColIndex,
+    monthCol: monthCol
+  };
 }
 
 function markStudentPaid(studentId, branch, month) {
@@ -820,15 +835,10 @@ function getFinancialSummary(branch, month) {
   let cumulativeExpenses = 0;
   let devFundBalance = 0;
 
-  if (devFundSheet) {
-    const devData = devFundSheet.getDataRange().getValues();
-    for (let i = 1; i < devData.length; i++) {
   // Replaced with getAllDevelopmentExpenses logic
   const allExpenses = getAllDevelopmentExpenses();
   
   // Calculate expenses for this branch/period
-  const limitMonth = month === -1 ? 11 : month;
-  let cumulativeExpenses = 0;
 
   allExpenses.forEach(expense => {
     const expMonth = expense.month;
