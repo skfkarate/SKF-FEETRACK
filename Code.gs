@@ -877,7 +877,9 @@ function getFinancialSummary(branch, month) {
             amount: amount,
             reason: refData[i][4] || "",
             description: refData[i][8] || "",
-            date: refData[i][7], // Used date
+            date: refData[i][7] instanceof Date 
+              ? refData[i][7].toISOString().split('T')[0] 
+              : String(refData[i][7]), // Explicit string conversion
           });
         }
       }
@@ -1079,7 +1081,10 @@ function getFinancialSummary(branch, month) {
     devFundSpent: devFundSpent,
     totalContributions: cumulativeAllocation,
     availableBalance: devFundBalance,
+    devFundBalance: devFundBalance, // FIX: Frontend expects this key
     yearlyBreakdown: [], // Not needed for this view
+    admissionCollected: admissionCollected || 0,
+    dressProfit: dressProfit || 0
   };
 }
 

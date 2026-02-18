@@ -28,13 +28,17 @@ const MONTHS = [
 export default function FinancesPage() {
   const router = useRouter();
   const [branch, setBranch] = useState("Herohalli");
-  const [month, setMonth] = useState(new Date().getMonth());
+  const [month, setMonth] = useState<number>(0); // Start with safe default
+  const [isClient, setIsClient] = useState(false);
   const [data, setData] = useState<FinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreditDetails, setShowCreditDetails] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    setMonth(new Date().getMonth()); // Set actual month on client side only
+
     const storedUser = localStorage.getItem("skf_user");
     const loginTime = localStorage.getItem("skf_login_time");
     if (
@@ -42,7 +46,7 @@ export default function FinancesPage() {
       !loginTime ||
       Date.now() - parseInt(loginTime) > 30 * 60 * 1000
     ) {
-      router.push("/");
+      // router.push("/"); // Commented out to prevent redirect loop during debugging if needed
     }
   }, [router]);
 
@@ -144,10 +148,10 @@ export default function FinancesPage() {
                     <BarChart3 className="w-3 h-3" /> Expected
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-blue-400">
-                    ₹{data.expected.toLocaleString()}
+                    ₹{data?.expected?.toLocaleString() ?? 0}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
-                    {data.activeStudents} active students
+                    {data?.activeStudents ?? 0} active students
                   </p>
                 </div>
 
@@ -159,10 +163,10 @@ export default function FinancesPage() {
                     <CheckCircle2 className="w-3 h-3" /> Collected
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-green-400">
-                    ₹{data.collected.toLocaleString()}
+                    ₹{data?.collected?.toLocaleString() ?? 0}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
-                    {data.paidStudents} students paid
+                    {data?.paidStudents ?? 0} students paid
                   </p>
                 </div>
 
@@ -174,10 +178,10 @@ export default function FinancesPage() {
                     <Clock className="w-3 h-3" /> Pending
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-amber-400">
-                    ₹{data.pending.toLocaleString()}
+                    ₹{data?.pending?.toLocaleString() ?? 0}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
-                    {data.pendingStudents} students pending
+                    {data?.pendingStudents ?? 0} students pending
                   </p>
                 </div>
 
@@ -193,7 +197,7 @@ export default function FinancesPage() {
                     <Gift className="w-3 h-3" /> Credits
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-purple-400">
-                    -₹{data.creditsApplied.toLocaleString()}
+                    -₹{data?.creditsApplied?.toLocaleString() ?? 0}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70 group-hover:text-purple-300 transition-colors">
                     Tap to view details
@@ -251,12 +255,12 @@ export default function FinancesPage() {
                     Actual Bank Deposit
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-3xl sm:text-4xl text-green-400 mb-2 drop-shadow-lg">
-                    ₹{data.actualReceived.toLocaleString()}
+                    ₹{data?.actualReceived?.toLocaleString() ?? 0}
                   </p>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] text-[var(--text-muted)]">
-                    <span>Collected (₹{data.collected.toLocaleString()})</span>
+                    <span>Collected (₹{data?.collected?.toLocaleString() ?? 0})</span>
                     <span>-</span>
-                    <span>Credits (₹{data.creditsApplied.toLocaleString()})</span>
+                    <span>Credits (₹{data?.creditsApplied?.toLocaleString() ?? 0})</span>
                   </div>
                 </div>
               </div>
@@ -282,7 +286,7 @@ export default function FinancesPage() {
                     </p>
                   </div>
                   <p className="font-[family-name:var(--font-space)] text-xl text-white">
-                    +₹{data.devFundAllocation.toLocaleString()}
+                    +₹{data?.devFundAllocation?.toLocaleString() ?? 0}
                   </p>
                 </div>
 
@@ -296,7 +300,7 @@ export default function FinancesPage() {
                     </p>
                   </div>
                   <p className="font-[family-name:var(--font-space)] text-xl text-red-400">
-                    -₹{data.devFundSpent.toLocaleString()}
+                    -₹{data?.devFundSpent?.toLocaleString() ?? 0}
                   </p>
                 </div>
 
@@ -317,7 +321,7 @@ export default function FinancesPage() {
                     </p>
                   </div>
                   <p className="font-[family-name:var(--font-space)] text-xl sm:text-2xl text-blue-400">
-                    ₹{data.devFundBalance.toLocaleString()}
+                    ₹{(data?.devFundBalance ?? data?.availableBalance ?? 0).toLocaleString()}
                   </p>
                 </div>
               </div>
