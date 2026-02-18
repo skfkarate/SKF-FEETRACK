@@ -54,7 +54,7 @@ const isMockData = () => !SCRIPT_URL;
 // FETCH HELPERS - Timeout & Retry
 // ============================================
 
-const DEFAULT_TIMEOUT = 15000; // 15 seconds (faster fail, smarter retry)
+const DEFAULT_TIMEOUT = 10000; // 10 seconds (faster fail, smarter retry)
 const MAX_RETRIES = 2; // Reduced retries for faster perceived performance
 const INITIAL_RETRY_DELAY = 500; // 500ms
 
@@ -141,11 +141,20 @@ const CACHE_TTL = {
 };
 
 // Stale duration - how long to serve stale data while refreshing
-const STALE_DURATION = 30 * 60 * 1000; // 30 minutes
+const STALE_DURATION = 5 * 60 * 1000; // 5 minutes (was 30 - too long, caused wrong month data)
 
 /**
  * Get data from cache if available and fresh
  */
+function getTTLForKey(key: string): number {
+  if (key.startsWith('students:')) return CACHE_TTL.students;
+  if (key.startsWith('financial:')) return CACHE_TTL.financial;
+  if (key.startsWith('devFund:')) return CACHE_TTL.devFund;
+  if (key.startsWith('referral:')) return CACHE_TTL.referrals;
+  if (key.startsWith('branchCounts')) return CACHE_TTL.branchCounts;
+  return CACHE_TTL.students; // default
+}
+
 function getCached<T>(key: string): { data: T | null; isStale: boolean } {
   const entry = cache.get(key) as CacheEntry<T> | undefined;
 
@@ -154,7 +163,7 @@ function getCached<T>(key: string): { data: T | null; isStale: boolean } {
   }
 
   const age = Date.now() - entry.timestamp;
-  const ttl = Object.values(CACHE_TTL).find(() => true) || CACHE_TTL.students;
+  const ttl = getTTLForKey(key);
 
   if (age < ttl) {
     // Fresh data
@@ -332,6 +341,10 @@ export async function markBreak(
   });
   const data = await response.json();
   if (!data.success) throw new Error(data.error || "Failed to mark as break");
+
+  // Invalidate caches - break affects this month's data
+  invalidateCache(`students:${branch}:${month}`);
+  invalidateCache(`financial:${branch}`);
 }
 
 export async function markDiscontinued(
@@ -351,6 +364,10 @@ export async function markDiscontinued(
   });
   const data = await response.json();
   if (!data.success) throw new Error(data.error || "Failed to mark as discontinued");
+
+  // Invalidate ALL month caches for this branch - discontinued affects all future months
+  invalidateCache(`students:${branch}`);
+  invalidateCache(`financial:${branch}`);
 }
 
 export async function getDashboardStats(
@@ -417,6 +434,12 @@ export async function addStudent(
   });
   const data = await response.json();
   if (!data.success) throw new Error(data.error || "Failed to add student");
+
+  // Invalidate ALL student caches for this branch - new student appears in all months from joinMonth onwards
+  invalidateCache(`students:${branch}`);
+  invalidateCache(`financial:${branch}`);
+  invalidateCache('branchCounts');
+
   return data.data;
 }
 
