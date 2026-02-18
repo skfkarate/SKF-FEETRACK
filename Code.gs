@@ -1160,73 +1160,8 @@ function getFinancialSummary(branch, month) {
     reserveUsed: reserveUsed
   };
 }
-    
-    let totalPaidRecords = 0;
-    const feesLookup = {};
-    if (feesSheet) {
-      const fd = feesSheet.getDataRange().getValues();
-      for (let i = 1; i < fd.length; i++) {
-        if(String(fd[i][0]).trim() && String(fd[i][3]).trim() === CONFIG.year) 
-            feesLookup[String(fd[i][0]).trim()] = fd[i];
-      }
-    }
-    const janIdx = feesSheet ? getJanColumnIndex(feesSheet) : CONFIG.monthStart;
-    const curM = new Date().getMonth();
-    
-    active.forEach(s => {
-       const base = s.originalFee || s.fee || 500;
-       const join = s.joinMonth || 0;
-       const row = feesLookup[s.id];
-       for(let m=0; m<=curM; m++) {
-           if(m < join) continue;
-           expected += base;
-           if(row) {
-               const st = String(row[janIdx + m] || "").trim();
-               if(st === "Paid" || st === "PAID") {
-                   collected += base;
-                   totalPaidRecords++;
-               }
-           }
-       }
-    });
-    paidCount = totalPaidRecords;
-  } else {
-    // Specific Month
-    const result = getStudentsWithPaymentStatus(branch, month);
-    const active = result.students.filter(s => s.status === "Active");
-    const paid = active.filter(s => s.paid);
-    activeCount = active.length;
-    paidCount = paid.length;
-    expected = active.reduce((sum, s) => sum + (s.originalFee || s.fee || 0), 0);
-    collected = paid.reduce((sum, s) => sum + (s.originalFee || s.fee || 0), 0);
-  }
 
-  const actualReceived = collected - creditsApplied;
 
-  return {
-    month: month,
-    branch: branch,
-    activeStudents: activeCount,
-    paidStudents: paidCount,
-    pendingStudents: activeCount - paidCount,
-    expected: expected,
-    collected: collected,
-    pending: expected - collected,
-    creditsApplied: creditsApplied,
-    creditDetails: creditDetails,
-    actualReceived: actualReceived,
-    devFundAllocation: devFundAllocation,
-    admissionCollected: admissionCollected,
-    dressProfit: dressProfit,
-    devFundSpent: devFundSpent,
-    totalContributions: cumulativeAllocation,
-    availableBalance: devFundBalance,
-    devFundBalance: devFundBalance,
-    yearlyBreakdown: yearlyBreakdown,
-    admissionCollected: admissionCollected || 0,
-    dressProfit: dressProfit || 0
-  };
-}
 
 // ============================================
 // DEVELOPMENT FUND FUNCTIONS
