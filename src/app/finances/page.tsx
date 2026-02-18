@@ -147,7 +147,7 @@ export default function FinancesPage() {
               <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-3 ml-1">
                 Collection Metrics
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
                   <div className="absolute top-0 right-0 p-2 opacity-10">
                     <BarChart3 className="w-12 h-12 text-blue-400" />
