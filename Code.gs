@@ -924,7 +924,7 @@ function getFinancialSummary(branch, month) {
         creditsMap[m] += amount;
         totalCreditsAllTime += amount;
 
-        if (month === -1 || m === month) {
+        if (month === -1 || m <= limitMonth) {
           creditsApplied += amount;
           creditDetails.push({
             studentName: refData[i][2],

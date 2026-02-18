@@ -87,35 +87,34 @@ export default function FinancesPage() {
       />
 
       <main className="max-w-2xl mx-auto p-4 pt-24">
-        {/* Branch Toggle */}
-        {/* Branch Toggle - Pill Style */}
-        <div className="flex p-1 bg-black/40 rounded-full w-full max-w-md mx-auto border border-white/10 mb-8 backdrop-blur-md shadow-2xl">
+        {/* Branch Toggle - Matching Development Fund Style */}
+        <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-md mx-auto border border-white/5 mb-6">
           <button
             onClick={() => setBranch("Overall")}
-            className={`flex-1 py-2.5 rounded-full text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-widest transition-all duration-300 ${branch === "Overall"
-              ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25 border border-white/10"
-              : "text-white/40 hover:text-white hover:bg-white/5"
+            className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "Overall"
+              ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
+              : "text-[var(--text-muted)] hover:text-white"
               }`}
           >
             OVERALL
           </button>
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-2.5 rounded-full text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-widest transition-all duration-300 ${branch === "Herohalli"
-              ? "bg-red-600 text-white shadow-lg shadow-red-500/25 border border-white/10"
-              : "text-white/40 hover:text-white hover:bg-white/5"
+            className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "Herohalli"
+              ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
+              : "text-[var(--text-muted)] hover:text-white"
               }`}
           >
             HEROHALLI
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-2.5 rounded-full text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-widest transition-all duration-300 ${branch === "MPSC"
-              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25 border border-white/10"
-              : "text-white/40 hover:text-white hover:bg-white/5"
+            className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "MPSC"
+              ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
+              : "text-[var(--text-muted)] hover:text-white"
               }`}
           >
-            MPSC
+            MP SPORTS
           </button>
         </div>
 
