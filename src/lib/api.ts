@@ -784,7 +784,6 @@ export async function getFinancialSummary(
       yearlyBreakdown: [],
       admissionCollected: 5000,
       dressProfit: 2000,
-      devFundBalance: 3250,
     };
   }
 
