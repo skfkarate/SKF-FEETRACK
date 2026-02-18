@@ -34,14 +34,16 @@ export default function MonthlyFeeReceipt({
   onClose,
 }: MonthlyFeeReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
-  const receiptIdRef = useRef(Math.floor(Math.random() * 10000).toString().padStart(4, '0'));
 
   const branchName =
     branch === "MPSC" ? "MP Sports Club" : branch?.toUpperCase();
 
+  // eslint-disable-next-line react-hooks/purity -- receipt ID needs a unique suffix per mount
+  const receiptSuffix = useMemo(() => Math.floor(Math.random() * 10000).toString().padStart(4, '0'), []);
+
   const { receiptNo, date, purpose, amountWords } = useMemo(() => {
     return {
-      receiptNo: `SKF-${branch.substring(0, 1).toUpperCase()}-${receiptIdRef.current}`,
+      receiptNo: `SKF-${branch.substring(0, 1).toUpperCase()}-${receiptSuffix}`,
       date: new Date().toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "long",
@@ -52,7 +54,7 @@ export default function MonthlyFeeReceipt({
       })} Monthly Training Fee`,
       amountWords: `Rupees ${student.fee.toLocaleString()} Only`,
     };
-  }, [branch, month, student.fee]);
+  }, [branch, month, student.fee, receiptSuffix]);
 
   // Use browser's native print for PERFECT visual match
   const downloadReceipt = () => {

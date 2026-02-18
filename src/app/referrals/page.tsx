@@ -82,7 +82,7 @@ export default function ReferralCreditsPage() {
     try {
       const studentList = await getStudents(branch, new Date().getMonth());
       setStudents(studentList.filter((s) => s.status === "Active"));
-    } catch (_err) {
+    } catch {
       alert("Failed to load students");
     } finally {
       setLoadingStudents(false);
