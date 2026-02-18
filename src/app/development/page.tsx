@@ -309,28 +309,46 @@ export default function DevelopmentFundPage() {
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-in">
-              <div className="glass-card p-4" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+              <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <PiggyBank className="w-12 h-12 text-blue-400" />
+                </div>
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <PiggyBank className="w-3 h-3" /> 30% Fund
+                  <PiggyBank className="w-3 h-3" /> Total Fund (30%)
                 </p>
                 <p className="font-[family-name:var(--font-space)] text-xl text-blue-400">
                   ₹{filteredStats.allocated.toLocaleString()}
                 </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                  Allocated from collected fees
+                </p>
               </div>
-              <div className="glass-card p-4" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
+              <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <Package className="w-12 h-12 text-amber-400" />
+                </div>
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <Package className="w-3 h-3" /> Spent
+                  <Package className="w-3 h-3" /> Total Spent
                 </p>
                 <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
                   ₹{filteredStats.spent.toLocaleString()}
                 </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                  Across all branches
+                </p>
               </div>
-              <div className="glass-card p-4" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+              <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <TrendingUp className="w-12 h-12 text-green-400" />
+                </div>
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> Balance
+                  <TrendingUp className="w-3 h-3" /> Available Balance
                 </p>
                 <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
                   ₹{filteredStats.balance.toLocaleString()}
+                </p>
+                <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                  Remaining fund
                 </p>
               </div>
             </div>
@@ -498,9 +516,9 @@ export default function DevelopmentFundPage() {
                 </div>
 
                 {newExpense.scope === "Others" && (
-                  <div>
-                    <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
-                      Specify Scope *
+                  <div className="animate-slide-down">
+                    <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium flex items-center gap-2">
+                      Specify Scope <span className="text-[10px] opacity-50 normal-case">(e.g. Tournament, Event)</span>
                     </label>
                     <input
                       type="text"
@@ -511,8 +529,9 @@ export default function DevelopmentFundPage() {
                           scopeOther: e.target.value,
                         })
                       }
-                      placeholder="e.g., Tournament, Training Camp..."
-                      className="input-field"
+                      placeholder="Enter custom scope..."
+                      className="input-field border-amber-500/30 focus:border-amber-500"
+                      autoFocus
                     />
                   </div>
                 )}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Wallet, MessageSquare } from "lucide-react";
+import { ArrowRight, Wallet, MessageSquare, PiggyBank } from "lucide-react";
 import MonthSelector from "@/components/common/MonthSelector";
 
 function getAuthenticatedUser(): string | null {
@@ -184,6 +184,24 @@ export default function DashboardPage() {
                 <p className="text-[var(--text-muted)] text-xs mt-0.5">WhatsApp Fee Reminders</p>
               </div>
               <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-cyan-400 transition-all duration-300 group-hover:translate-x-1" />
+            </div>
+          </Link>
+          <Link
+            href="/development"
+            className="glass-card block p-5 group relative overflow-hidden
+                       hover:border-amber-600/40 transition-all duration-300"
+          >
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500
+                            transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-amber-400 flex items-center gap-2">
+                  <PiggyBank className="w-5 h-5" />
+                  DEVELOPMENT FUND
+                </h3>
+                <p className="text-[var(--text-muted)] text-xs mt-0.5">30% Allocation & Expenses</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-amber-400 transition-all duration-300 group-hover:translate-x-1" />
             </div>
           </Link>
         </div>
