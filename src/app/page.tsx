@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Shield, Loader2 } from "lucide-react";
 
 const VALID_USERS = ["krish", "usha"];
 
@@ -30,86 +31,106 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.08) 0%, var(--bg-deep) 60%)" }}>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.06) 0%, var(--bg-deep) 50%)",
+      }}
+    >
+      {/* Ambient glow */}
+      <div
+        className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] opacity-30 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse, rgba(220,38,38,0.12) 0%, transparent 70%)",
+        }}
+      />
 
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 opacity-[0.03]"
-        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-
-      <div className="glass-card p-8 w-full max-w-sm animate-scale-in relative">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <div className="relative">
-            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-red-600/20 to-transparent blur-lg" />
-            <Image
-              src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
-              alt="SKF Logo"
-              width={80}
-              height={80}
-              className="relative rounded-full object-contain border border-white/10 bg-white/5"
-            />
-          </div>
+      {/* Logo + Brand */}
+      <div className="relative z-10 flex flex-col items-center mb-10 animate-fade-in">
+        <div className="relative mb-6">
+          <div className="absolute -inset-4 rounded-full bg-red-600/10 blur-2xl" />
+          <Image
+            src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
+            alt="SKF Logo"
+            width={88}
+            height={88}
+            className="relative rounded-full object-contain border-2 border-white/10 shadow-2xl shadow-red-900/30"
+          />
         </div>
-
-        {/* Title */}
-        <div className="text-center mb-8">
-          <h1 className="font-[family-name:var(--font-space)] text-3xl font-bold tracking-[0.2em] gradient-text">
-            SKF KARATE
-          </h1>
-          <p className="text-[var(--text-muted)] text-xs tracking-[0.15em] mt-2 uppercase">
-            Fee Management System
-          </p>
-        </div>
-
-        {/* Form */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
-              Access Code
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(""); }}
-              onKeyDown={(e) => e.key === "Enter" && !loading && handleLogin()}
-              placeholder="Enter your access code"
-              className="input-field font-[family-name:var(--font-space)] tracking-wider text-center text-lg"
-              autoFocus
-            />
-          </div>
-
-          {error && (
-            <div className="animate-slide-down">
-              <p className="text-red-400 text-sm text-center py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                {error}
-              </p>
-            </div>
-          )}
-
-          <button
-            onClick={handleLogin}
-            disabled={loading || !password.trim()}
-            className="btn-primary w-full font-[family-name:var(--font-space)] tracking-[0.15em] text-sm
-                       disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
-                       flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <div className="spinner !w-4 !h-4 !border-white/30 !border-t-white" />
-                AUTHENTICATING...
-              </>
-            ) : (
-              "ENTER"
-            )}
-          </button>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-[var(--text-muted)] text-[10px] mt-6 tracking-wider uppercase">
-          Sports Karate-do Fitness & Self Defence ®
+        <h1 className="font-[family-name:var(--font-space)] text-4xl font-bold tracking-[0.25em] text-white">
+          SKF
+        </h1>
+        <p className="text-[var(--text-muted)] text-[11px] tracking-[0.3em] uppercase mt-1.5 font-medium">
+          Karate • Fee Management
         </p>
       </div>
+
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-xs animate-scale-in">
+        <div
+          className="rounded-2xl p-6 backdrop-blur-xl border border-white/10 shadow-2xl"
+          style={{ background: "rgba(10,10,10,0.8)" }}
+        >
+          {/* Input */}
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                <label className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.2em] font-bold">
+                  Access Code
+                </label>
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && !loading && handleLogin()}
+                placeholder="• • • • • •"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-center text-lg font-[family-name:var(--font-space)] tracking-[0.3em] placeholder:text-white/15 focus:outline-none focus:border-red-500/40 focus:ring-1 focus:ring-red-500/20 transition-all"
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <div className="animate-slide-down">
+                <p className="text-red-400 text-xs text-center py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                  {error}
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={handleLogin}
+              disabled={loading || !password.trim()}
+              className="w-full py-3.5 rounded-xl font-[family-name:var(--font-space)] tracking-[0.2em] text-sm font-bold
+                         bg-gradient-to-r from-red-600 to-red-700 text-white
+                         hover:from-red-500 hover:to-red-600 hover:shadow-lg hover:shadow-red-900/30
+                         disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:shadow-none
+                         active:scale-[0.98] transition-all duration-200
+                         flex items-center justify-center gap-2.5"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  VERIFYING
+                </>
+              ) : (
+                "ENTER"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <p className="relative z-10 text-center text-[var(--text-muted)] text-[9px] mt-8 tracking-[0.2em] uppercase opacity-50">
+        Sports Karate-do Fitness & Self Defence ®
+      </p>
     </div>
   );
 }

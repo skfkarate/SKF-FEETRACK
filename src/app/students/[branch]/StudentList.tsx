@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft,
   Gift,
   Users,
   IndianRupee,
@@ -12,9 +11,7 @@ import {
   TrendingDown,
   Search,
   Filter,
-  Phone,
   Calendar,
-  MoreVertical,
   CheckCircle2,
   Clock,
   AlertCircle
@@ -548,16 +545,11 @@ export default function StudentList({ branch }: { branch: string }) {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-3 text-[var(--text-muted)] text-xs">
+                        <div className="flex items-center gap-2 text-[var(--text-muted)] text-xs">
                           <span className="font-mono opacity-70">{student.id}</span>
                           <span className="flex items-center gap-1">
-                            <IndianRupee className="w-3 h-3" /> {student.fee}
+                            <IndianRupee className="w-3 h-3" /> ₹{student.fee}
                           </span>
-                          {student.phone && (
-                            <span className="flex items-center gap-1 opacity-70">
-                              <Phone className="w-3 h-3" /> {student.phone}
-                            </span>
-                          )}
                         </div>
 
                         {(student.creditApplied || 0) > 0 && (
@@ -573,13 +565,14 @@ export default function StudentList({ branch }: { branch: string }) {
                         {student.monthStatus === "Paid" ? (
                           <button
                             onClick={() => setReceiptStudent(student)}
-                            className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-2 rounded-lg font-[family-name:var(--font-space)] text-xs tracking-wider hover:bg-green-500/20 transition-all flex items-center gap-1.5"
+                            className="w-9 h-9 rounded-full bg-green-500/15 border border-green-500/30 text-green-400 flex items-center justify-center hover:bg-green-500/25 transition-all"
+                            title="View Receipt"
                           >
-                            <CheckCircle2 className="w-3 h-3" /> PAID
+                            <CheckCircle2 className="w-4 h-4" />
                           </button>
                         ) : isInactive ? (
-                          <div className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider font-medium px-2 py-1">
-                            {student.monthStatus}
+                          <div className="w-9 h-9 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-[var(--text-muted)]">
+                            <AlertCircle className="w-4 h-4" />
                           </div>
                         ) : (
                           <button
@@ -593,18 +586,16 @@ export default function StudentList({ branch }: { branch: string }) {
                               markingPaid === student.id ||
                               markingStatus === student.id
                             }
-                            className={`px-4 py-2 rounded-lg font-[family-name:var(--font-space)] text-xs tracking-wider transition-all border select-none flex items-center gap-2 ${markingPaid === student.id
-                              ? "bg-white/5 text-[var(--text-muted)] border-white/5"
-                              : "bg-white text-black border-white hover:bg-gray-200 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all select-none ${markingPaid === student.id || markingStatus === student.id
+                              ? "bg-white/5 text-[var(--text-muted)]"
+                              : "bg-white text-black hover:bg-gray-200 shadow-[0_0_12px_rgba(255,255,255,0.15)]"
                               }`}
+                            title="Mark Paid"
                           >
                             {markingPaid === student.id || markingStatus === student.id ? (
-                              "..."
+                              <div className="spinner !w-4 !h-4" />
                             ) : (
-                              <>
-                                <span>MARK PAID</span>
-                                <MoreVertical className="w-3 h-3 opacity-50" />
-                              </>
+                              <IndianRupee className="w-4 h-4" />
                             )}
                           </button>
                         )}

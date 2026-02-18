@@ -53,40 +53,38 @@ export default function DashboardPage() {
             Student Management
           </p>
 
-          {/* Herohalli - Primary Branch */}
+          {/* MPSC - Main Branch (Higher Revenue) */}
           <Link
-            href="/students/Herohalli"
+            href="/students/MPSC"
             className="group relative overflow-hidden rounded-2xl h-32 flex items-center justify-between p-6 transition-all duration-300 hover:scale-[1.02]"
             style={{
-              background: "linear-gradient(135deg, rgba(220,38,38,0.2) 0%, rgba(0,0,0,0.4) 100%)",
-              border: "1px solid rgba(220,38,38,0.3)"
+              background: "linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(0,0,0,0.4) 100%)",
+              border: "1px solid rgba(59,130,246,0.3)"
             }}
           >
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&q=80')] opacity-20 bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" />
             <div className="relative z-10">
-              <span className="text-red-400 text-[10px] tracking-[0.2em] uppercase font-bold block mb-1">Main Branch</span>
-              <h3 className="font-[family-name:var(--font-space)] text-2xl font-bold text-white tracking-wider">HEROHALLI</h3>
+              <span className="text-blue-400 text-[10px] tracking-[0.2em] uppercase font-bold block mb-1">Main Branch</span>
+              <h3 className="font-[family-name:var(--font-space)] text-2xl font-bold text-white tracking-wider">MP SPORTS CLUB</h3>
             </div>
-            <div className="relative z-10 w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center border border-red-500/30 group-hover:bg-red-600 group-hover:text-white transition-all text-red-400">
+            <div className="relative z-10 w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center border border-blue-500/30 group-hover:bg-blue-600 group-hover:text-white transition-all text-blue-400">
               <ArrowRight className="w-5 h-5" />
             </div>
           </Link>
 
-          {/* MPSC - Secondary Branch */}
+          {/* Herohalli - Secondary Branch */}
           <Link
-            href="/students/MPSC"
+            href="/students/Herohalli"
             className="group relative overflow-hidden rounded-2xl h-24 flex items-center justify-between p-6 transition-all duration-300 hover:scale-[1.02]"
             style={{
-              background: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0.4) 100%)",
-              border: "1px solid rgba(59,130,246,0.25)"
+              background: "linear-gradient(135deg, rgba(220,38,38,0.15) 0%, rgba(0,0,0,0.4) 100%)",
+              border: "1px solid rgba(220,38,38,0.25)"
             }}
           >
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&q=80')] opacity-10 bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" />
             <div className="relative z-10">
-              <span className="text-blue-400 text-[10px] tracking-[0.2em] uppercase font-bold block mb-1">Secondary Branch</span>
-              <h3 className="font-[family-name:var(--font-space)] text-xl font-bold text-white tracking-wider">MP SPORTS CLUB</h3>
+              <span className="text-red-400 text-[10px] tracking-[0.2em] uppercase font-bold block mb-1">Secondary Branch</span>
+              <h3 className="font-[family-name:var(--font-space)] text-xl font-bold text-white tracking-wider">HEROHALLI</h3>
             </div>
-            <div className="relative z-10 w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center border border-blue-500/30 group-hover:bg-blue-600 group-hover:text-white transition-all text-blue-400">
+            <div className="relative z-10 w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center border border-red-500/30 group-hover:bg-red-600 group-hover:text-white transition-all text-red-400">
               <ArrowRight className="w-4 h-4" />
             </div>
           </Link>

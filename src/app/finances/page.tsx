@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getFinancialSummary, FinancialSummary } from "@/lib/api";
 import {
-  ArrowLeft,
   ArrowRight,
   BarChart3,
   CheckCircle2,
