@@ -218,7 +218,15 @@ function getJanColumnIndex(feesSheet) {
 function doGet(e) {
   try {
     const branch = e.parameter.branch || "Herohalli";
-    const month = parseInt(e.parameter.month) || new Date().getMonth();
+    
+    // Fix: Handle 0 (Jan) correctly. undefined/null/empty string invalidates it, but 0 is valid.
+    let month;
+    if (e.parameter.month !== undefined && e.parameter.month !== "") {
+      month = parseInt(e.parameter.month);
+    } else {
+      month = new Date().getMonth();
+    }
+
     const students = getStudentsWithPaymentStatus(branch, month);
     return jsonResponse({ success: true, students: students });
   } catch (error) {
@@ -731,23 +739,52 @@ function getFinancialSummary(branch, month) {
 
   if (!config) throw new Error("Invalid branch: " + branch);
 
-  // Calculate development fund metrics
-  const devFundSheet = ss.getSheetByName(config.devFund);
-  let devFundAllocation = 0;
-  let devFundSpent = 0;
-  let devFundBalance = 0;
+  // 1. Calculate Credits Calculation FIRST to use in Dev Fund
+  const refSheet = ss.getSheetByName(config.refCredits);
+  const creditsMap = {}; // month -> totalCreditAmount
+  let totalCreditsAllTime = 0;
+  let creditsApplied = 0; // For the requested period
+  const creditDetails = [];
 
-  // Helper to calculate YTD allocation
+  if (refSheet) {
+    const refData = refSheet.getDataRange().getValues();
+    for (let i = 1; i < refData.length; i++) {
+      const usedInMonth = refData[i][6];
+      if (
+        usedInMonth !== "" &&
+        usedInMonth !== undefined &&
+        usedInMonth !== null
+      ) {
+        const m = parseInt(usedInMonth);
+        const amount = Number(refData[i][3]) || 0;
+        
+        // Add to map
+        if (!creditsMap[m]) creditsMap[m] = 0;
+        creditsMap[m] += amount;
+        totalCreditsAllTime += amount;
+
+        // If specific period matched
+        if (month === -1 || m === month) {
+          creditsApplied += amount;
+          creditDetails.push({
+            studentName: refData[i][2],
+            amount: amount,
+            date: refData[i][7], // Used date
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Fees and Dev Fund Allocation
   const feesSheet = ss.getSheetByName(config.fees);
+  let devFundAllocation = 0;
   let cumulativeAllocation = 0;
   
-  // DYNAMIC Jan column detection for feesSheet
-  let feesJanColIndex = CONFIG.monthStart;
   if (feesSheet) {
-    feesJanColIndex = getJanColumnIndex(feesSheet);
+    const feesJanColIndex = getJanColumnIndex(feesSheet);
     const feesData = feesSheet.getDataRange().getValues();
-    // Calculate till current month (or all months if month is -1)
-    const limitMonth = month === -1 ? 11 : month;
+    const limitMonth = month === -1 ? 11 : month; // Iterate up to current request
 
     for (let m = 0; m <= limitMonth; m++) {
       let monthCollected = 0;
@@ -759,98 +796,108 @@ function getFinancialSummary(branch, month) {
           monthCollected += Number(feesData[i][2]) || 0;
         }
       }
-      cumulativeAllocation += Math.round(
-        monthCollected * CONFIG.devFundPercent,
-      );
 
-      // If specific month requested, set allocation for that month
+      // SUBTRACT CREDITS for this month to get Actual Cash
+      const monthCredits = creditsMap[m] || 0;
+      const monthCash = Math.max(0, monthCollected - monthCredits);
+
+      const allocation = Math.round(monthCash * CONFIG.devFundPercent);
+      cumulativeAllocation += allocation;
+
       if (month !== -1 && m === month) {
-        devFundAllocation = Math.round(monthCollected * CONFIG.devFundPercent);
+        devFundAllocation = allocation;
       }
     }
-    // If overall, allocation is the total cumulative
+
     if (month === -1) {
       devFundAllocation = cumulativeAllocation;
     }
   }
 
+  // 3. Dev Fund Expenses
+  const devFundSheet = ss.getSheetByName(config.devFund);
+  let devFundSpent = 0;
+  let cumulativeExpenses = 0;
+  let devFundBalance = 0;
+
   if (devFundSheet) {
     const devData = devFundSheet.getDataRange().getValues();
-    let cumulativeExpenses = 0;
-
     for (let i = 1; i < devData.length; i++) {
-      const expMonth = Number(devData[i][1]);
-      const expAmount = Number(devData[i][4]) || 0;
+  // Replaced with getAllDevelopmentExpenses logic
+  const allExpenses = getAllDevelopmentExpenses();
+  
+  // Calculate expenses for this branch/period
+  const limitMonth = month === -1 ? 11 : month;
+  let cumulativeExpenses = 0;
 
-      // For balance, we always need cumulative expenses up to the limit month
-      const limitMonth = month === -1 ? 11 : month;
-      if (expMonth <= limitMonth) {
-        cumulativeExpenses += expAmount;
-      }
+  allExpenses.forEach(expense => {
+    const expMonth = expense.month;
+    const expAmount = expense.amount;
+    const expScope = expense.scope || "Herohalli"; // Default to Herohalli if missing (legacy)
+    
+    // Determine cost share based on scope
+    let share = 0;
+    if (expScope === branch) {
+      share = 1; // 100%
+    } else if (expScope === "Both" || expScope === "Others" || !["Herohalli", "MPSC"].includes(expScope)) {
+      share = 0.5; // 50% split for shared
+    } else {
+      share = 0; // belongs to other branch
+    }
+    
+    const weightedAmount = expAmount * share;
 
-      // For "spent this period"
-      if (month === -1) {
-        devFundSpent += expAmount; // All expenses for YTD
-      } else if (expMonth === month) {
-        devFundSpent += expAmount; // Specific month expenses
-      }
+    // For balance: Cumulative up to limit month
+    if (expMonth <= limitMonth) {
+       cumulativeExpenses += weightedAmount;
     }
 
-    devFundBalance = cumulativeAllocation - cumulativeExpenses;
-  }
+    // For "spent this period"
+    if (month === -1) {
+       devFundSpent += weightedAmount; // YTD
+    } else if (expMonth === month) {
+       devFundSpent += weightedAmount;
+    }
+  });
 
-  // Handle students and payment data
+  devFundBalance = cumulativeAllocation - cumulativeExpenses;
+
+  // 4. Student Payment Stats (Live Calculation for display)
   let expected = 0;
   let collected = 0;
   let activeCount = 0;
   let paidCount = 0;
 
   if (month === -1) {
-    // Overall / YTD Calculation
-    const students = getStudentsWithPaymentStatus(branch, 0); // Using 0 as dummy month just to get list
+    // Overall Stats
+    const students = getStudentsWithPaymentStatus(branch, 0); 
     const active = students.filter((s) => s.status === "Active");
-
     activeCount = active.length;
-    paidCount = 0;
     
-    // Track unique paid student-months for proper counting
     let totalPaidRecords = 0;
-    let totalExpectedRecords = 0;
-
-    // Build fees lookup
+    
     const feesLookup = {};
-    const feesSheet = ss.getSheetByName(config.fees);
-
     if (feesSheet) {
       const feesData = feesSheet.getDataRange().getValues();
       for (let i = 1; i < feesData.length; i++) {
         const sid = String(feesData[i][0]).trim();
-        const sYear = String(feesData[i][3]).trim();
-        if (sid && sYear === CONFIG.year) {
+        if (sid && String(feesData[i][3]).trim() === CONFIG.year) {
           feesLookup[sid] = feesData[i];
         }
       }
     }
 
     const currentMonthIndex = new Date().getMonth();
+    const feesJanColIndex = feesSheet ? getJanColumnIndex(feesSheet) : CONFIG.monthStart;
 
-    // Sum up for all active students
     active.forEach((student) => {
-      // Use originalFee if available (from DB), else 500
-      // Safe bet: use student.originalFee || student.fee
       const baseFee = student.originalFee || student.fee || 500;
-
-      // Join month check
       const joinedAt = student.joinMonth || 0;
-
       const feeRow = feesLookup[student.id];
 
       for (let m = 0; m <= currentMonthIndex; m++) {
-        // Skip months before joining
         if (m < joinedAt) continue;
-
         expected += baseFee;
-        totalExpectedRecords++;
 
         if (feeRow) {
           const colIndex = feesJanColIndex + m;
@@ -862,78 +909,33 @@ function getFinancialSummary(branch, month) {
         }
       }
     });
-    
-    // For YTD, paidCount represents the total number of paid month-records
-    // and pendingStudents represents total unpaid month-records
-    // We'll set paidCount to totalPaidRecords for accurate reporting
     paidCount = totalPaidRecords;
-    // Note: pendingStudents will be calculated as totalExpectedRecords - totalPaidRecords
-    // But since the return format expects student counts, we'll leave activeCount as active.length
-    // The pending/pendingStudents calculation happens at the return statement
   } else {
-    // Specific Month Calculation
+    // Specific Month
     const students = getStudentsWithPaymentStatus(branch, month);
     const active = students.filter((s) => s.status === "Active");
     const paid = active.filter((s) => s.paid);
-
     activeCount = active.length;
     paidCount = paid.length;
-
-    expected = active.reduce(
-      (sum, s) => sum + (s.originalFee || s.fee || 0),
-      0,
-    );
+    expected = active.reduce((sum, s) => sum + (s.originalFee || s.fee || 0), 0);
     collected = paid.reduce((sum, s) => sum + (s.originalFee || s.fee || 0), 0);
   }
 
-  // Get credits applied
-  let creditsApplied = 0;
-  const creditDetails = [];
-
-  const refSheet = ss.getSheetByName(config.refCredits);
-  if (refSheet) {
-    const refData = refSheet.getDataRange().getValues();
-    for (let i = 1; i < refData.length; i++) {
-      const usedInMonth = refData[i][6];
-      if (
-        usedInMonth !== "" &&
-        usedInMonth !== undefined &&
-        usedInMonth !== null
-      ) {
-        // If month is -1, include all used credits. Else check specific month.
-        if (month === -1 || parseInt(usedInMonth) === month) {
-          const amount = Number(refData[i][3]) || 0;
-          creditsApplied += amount;
-
-          creditDetails.push({
-            studentName: refData[i][2],
-            amount: amount,
-            date: refData[i][7], // Used date
-          });
-        }
-      }
-    }
-  }
-
-  // Actual received = collected - credits (what should be in bank)
+  // Actual received is collected fees minus credits used
   const actualReceived = collected - creditsApplied;
 
   return {
     month: month,
     branch: branch,
-    // Fee metrics
     activeStudents: activeCount,
     paidStudents: paidCount,
     pendingStudents: activeCount - paidCount,
     expected: expected,
     collected: collected,
     pending: expected - collected,
-    // Credits
     creditsApplied: creditsApplied,
     creditDetails: creditDetails,
-    // Bank reconciliation
     actualReceived: actualReceived,
-    // Dev fund
     devFundAllocation: devFundAllocation,
     devFundSpent: devFundSpent,
     devFundBalance: devFundBalance,
@@ -945,76 +947,30 @@ function getFinancialSummary(branch, month) {
 // ============================================
 
 /**
- * Get development fund data for a branch
- * Calculates 30% of collected fees and tracks expenses
+ * HELPER: Get all development expenses from all sources (Unified)
  */
-function getDevelopmentFundData(branch) {
+function getAllDevelopmentExpenses() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const config = CONFIG.branches[branch];
-
-  if (!config) throw new Error("Invalid branch: " + branch);
-
-  const feesSheet = ss.getSheetByName(config.fees);
-  const devFundSheet = ss.getSheetByName(config.devFund);
-
-  if (!feesSheet) throw new Error("Fees sheet not found: " + config.fees);
-
-  // Calculate collected fees per month
-  const feesData = feesSheet.getDataRange().getValues();
-  const monthlyData = [];
-
-  // Initialize monthly totals
-  for (let m = 0; m < 12; m++) {
-    monthlyData.push({
-      month: m,
-      year: CONFIG.year,
-      collected: 0,
-      devFund: 0,
-      spent: 0,
-      carryForward: 0,
-    });
-  }
-
-  // Calculate collected amount per month from fees sheet
-  // Fee amount is in column 3 (index 2), months dynamically detected from Jan header
-  const janColIndex = getJanColumnIndex(feesSheet);
+  const allExpenses = [];
+  const branches = ["Herohalli", "MPSC"];
   
-  for (let i = 1; i < feesData.length; i++) {
-    const row = feesData[i];
-    const year = String(row[3]).trim();
-
-    if (year !== CONFIG.year) continue;
-
-    const fee = Number(row[2]) || 0;
-
-    // Check each month column
-    for (let m = 0; m < 12; m++) {
-      const monthCol = janColIndex + m;
-      const status = String(row[monthCol]).trim();
-
-      if (status === "Paid") {
-        monthlyData[m].collected += fee;
-      }
-    }
-  }
-
-  // Calculate 30% dev fund for each month
-  for (let m = 0; m < 12; m++) {
-    monthlyData[m].devFund = Math.round(
-      monthlyData[m].collected * CONFIG.devFundPercent,
-    );
-  }
-
-  // Get expenses from DevFund sheet
-  const expenses = [];
-  if (devFundSheet) {
-    const devData = devFundSheet.getDataRange().getValues();
+  // Track processed IDs to avoid duplicates if we ever merge sheets
+  // Currently sheets are separate, so no ID collision expected unless manually duplicated
+  
+  for (const branch of branches) {
+    const config = CONFIG.branches[branch];
+    if (!config) continue;
     
-    // Detect new format (8 columns with Title, Description, Scope, Amount, Date_Added)
-    // vs old format (6 columns with Description, Amount, Date_Added)
+    const devFundSheet = ss.getSheetByName(config.devFund);
+    if (!devFundSheet) continue;
+    
+    const devData = devFundSheet.getDataRange().getValues();
+    // Detect new format (8 columns) vs old (6 columns)
+    // New: ID, Month, Year, Title, Desc, Scope, Amount, Date
+    // Old: ID, Month, Year, Desc, Amount, Date
     const headers = devData[0] || [];
     const isNewFormat = headers.length >= 8 && String(headers[5]).toLowerCase().includes('scope');
-
+    
     for (let i = 1; i < devData.length; i++) {
       const row = devData[i];
       const expenseId = String(row[0]).trim();
@@ -1023,37 +979,150 @@ function getDevelopmentFundData(branch) {
       const expenseMonth = parseInt(row[1]) || 0;
       const expenseYear = String(row[2]).trim();
       
-      // Handle both formats for amount
-      let amount;
-      if (isNewFormat) {
-        // New format: Amount is at index 6
-        amount = Number(row[6]) || 0;
-      } else {
-        // Old format: Amount is at index 4
-        amount = Number(row[4]) || 0;
-      }
+      if (expenseYear !== CONFIG.year) continue; // Filter by current year context
 
-      expenses.push({
+      let amount = 0;
+      let title = "";
+      let description = "";
+      let scope = branch; // Default to source branch
+      let dateAdded = "";
+      
+      if (isNewFormat) {
+        title = row[3] || "";
+        description = row[4] || "";
+        scope = row[5] || branch;
+        amount = Number(row[6]) || 0;
+        dateAdded = row[7] || "";
+      } else {
+        description = row[3] || "";
+        amount = Number(row[4]) || 0;
+        dateAdded = row[5] || "";
+        scope = branch; // Legacy data inherits branch from sheet name
+      }
+      
+      // Fallback amount check
+      if (amount === 0) amount = Number(row[6]) || Number(row[4]) || 0;
+
+      allExpenses.push({
         id: expenseId,
         month: expenseMonth,
         year: expenseYear,
-        description: isNewFormat ? (row[3] || row[4] || "") : (row[3] || ""),
+        title: title || description, // Fallback title
+        description: description,
+        scope: scope,
         amount: amount,
-        dateAdded: isNewFormat ? (row[7] || "") : (row[5] || ""),
+        dateAdded: dateAdded,
+        sourceSheet: config.devFund, // metadata for debug/deletion if needed
+        rowIndex: i + 1
       });
+    }
+  }
+  
+  return allExpenses;
+}
 
-      // Add to monthly spent if same year
-      if (
-        expenseYear === CONFIG.year &&
-        expenseMonth >= 0 &&
-        expenseMonth < 12
-      ) {
-        monthlyData[expenseMonth].spent += amount;
+/**
+ * Get development fund data for a branch (Specific View)
+ */
+function getDevelopmentFundData(branch) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const config = CONFIG.branches[branch];
+
+  if (!config) throw new Error("Invalid branch: " + branch);
+
+  const feesSheet = ss.getSheetByName(config.fees);
+  const refSheet = ss.getSheetByName(config.refCredits);
+
+  if (!feesSheet) throw new Error("Fees sheet not found: " + config.fees);
+
+  const monthlyData = [];
+
+  // Initialize monthly totals
+  for (let m = 0; m < 12; m++) {
+    monthlyData.push({
+      month: m,
+      year: CONFIG.year,
+      collected: 0,
+      creditsUsed: 0, // NEW field
+      devFund: 0,
+      spent: 0,
+      carryForward: 0,
+    });
+  }
+
+  // 1. Calculate collected amount per month
+  const feesData = feesSheet.getDataRange().getValues();
+  const janColIndex = getJanColumnIndex(feesSheet);
+  
+  for (let i = 1; i < feesData.length; i++) {
+    const row = feesData[i];
+    const year = String(row[3]).trim();
+    if (year !== CONFIG.year) continue;
+
+    const fee = Number(row[2]) || 0;
+
+    for (let m = 0; m < 12; m++) {
+      const monthCol = janColIndex + m;
+      const status = String(row[monthCol]).trim();
+      if (status === "Paid") {
+        monthlyData[m].collected += fee;
       }
     }
   }
 
-  // Calculate running carry-forward balance
+  // 2. Calculate Credits used per month
+  if (refSheet) {
+    const refData = refSheet.getDataRange().getValues();
+    for (let i = 1; i < refData.length; i++) {
+        const usedInMonth = refData[i][6];
+        if (usedInMonth !== "" && usedInMonth !== undefined && usedInMonth !== null) {
+            const m = parseInt(usedInMonth);
+            // Ensure month is within current year context (basic check, data assumed 2026)
+            if (m >= 0 && m < 12) {
+                const amount = Number(refData[i][3]) || 0;
+                monthlyData[m].creditsUsed += amount;
+            }
+        }
+    }
+  }
+
+  // 3. Calculate 30% dev fund for each month (on CASH)
+  for (let m = 0; m < 12; m++) {
+    const cashCollected = Math.max(0, monthlyData[m].collected - monthlyData[m].creditsUsed); // Subtract credits
+    monthlyData[m].devFund = Math.round(cashCollected * CONFIG.devFundPercent);
+  }
+
+  // 4. Get expenses from DevFund sheet (using helper and filtering for branch)
+  const allExpenses = getAllDevelopmentExpenses();
+  const branchExpenses = allExpenses.filter(expense => {
+    const expScope = expense.scope || "Herohalli";
+    if (expScope === branch) {
+      return true; // 100% for this branch
+    } else if (expScope === "Both" || expScope === "Others" || !["Herohalli", "MPSC"].includes(expScope)) {
+      // For shared expenses, only count half for this branch's specific view
+      // This is a design choice for how a "branch specific" view should handle shared costs.
+      // For simplicity, we'll include them fully here and let the unified view handle the split.
+      // Or, for a true "branch specific" view, we might only show expenses explicitly scoped to it.
+      // Let's stick to the original intent of this function: what *this branch* spent.
+      // So, only expenses explicitly for this branch, or half of "Both" if we want to attribute.
+      // For now, let's assume this function is for *direct* expenses of the branch.
+      // If "Both" means 50/50, then this branch's view should reflect its 50% share.
+      return false; // This function is for direct expenses, not shared.
+    }
+    return false; // Not for this branch
+  });
+
+  branchExpenses.forEach(expense => {
+    if (expense.year === CONFIG.year && expense.month >= 0 && expense.month < 12) {
+      let amountToAttribute = expense.amount;
+      if (expense.scope === "Both" || expense.scope === "Others" || !["Herohalli", "MPSC"].includes(expense.scope)) {
+        amountToAttribute = expense.amount * 0.5; // Attribute half of shared expenses
+      }
+      monthlyData[expense.month].spent += amountToAttribute;
+    }
+  });
+
+  // 5. Calculate running carry-forward balance
   let runningBalance = 0;
   for (let m = 0; m < 12; m++) {
     runningBalance += monthlyData[m].devFund - monthlyData[m].spent;
@@ -1068,7 +1137,7 @@ function getDevelopmentFundData(branch) {
   return {
     branch: branch,
     monthlyBreakdown: monthlyData,
-    expenses: expenses,
+    expenses: branchExpenses, // Only show expenses relevant to this branch's direct view
     totalContributions: totalContributions,
     totalSpent: totalSpent,
     availableBalance: availableBalance,
@@ -1088,24 +1157,25 @@ function getDevelopmentFundDataUnified() {
       month: m,
       year: CONFIG.year,
       collected: 0,
+      creditsUsed: 0, // NEW field
       devFund: 0,
       spent: 0,
       carryForward: 0,
     });
   }
 
-  const allExpenses = [];
+  const allExpenses = getAllDevelopmentExpenses(); // Use the helper function
 
-  // Process both branches
+  // Process both branches for collected fees and credits
   const branches = ["Herohalli", "MPSC"];
   for (const branch of branches) {
     const config = CONFIG.branches[branch];
     if (!config) continue;
 
     const feesSheet = ss.getSheetByName(config.fees);
-    const devFundSheet = ss.getSheetByName(config.devFund);
+    const refSheet = ss.getSheetByName(config.refCredits);
 
-    // Calculate collected amount per month from fees sheet
+    // 1. Calculate collected amount per month from fees sheet
     if (feesSheet) {
       const feesData = feesSheet.getDataRange().getValues();
       const janColIndex = getJanColumnIndex(feesSheet);
@@ -1126,67 +1196,43 @@ function getDevelopmentFundDataUnified() {
       }
     }
 
-    // Get expenses from DevFund sheet
-    if (devFundSheet) {
-      const devData = devFundSheet.getDataRange().getValues();
-      
-      // Detect new format (8 columns with Title, Description, Scope, Amount, Date_Added)
-      // vs old format (6 columns with Description, Amount, Date_Added)
-      const headers = devData[0] || [];
-      const isNewFormat = headers.length >= 8 && String(headers[5]).toLowerCase().includes('scope');
-
-      for (let i = 1; i < devData.length; i++) {
-        const row = devData[i];
-        const expenseId = String(row[0]).trim();
-        if (!expenseId) continue;
-
-        const expenseMonth = parseInt(row[1]) || 0;
-        const expenseYear = String(row[2]).trim();
-        
-        // Handle both formats for amount - try new format first, fallback to old
-        let amount;
-        if (isNewFormat) {
-          amount = Number(row[6]) || 0;
-        } else {
-          amount = Number(row[4]) || 0;
+    // 2. Calculate Credits used per month
+    if (refSheet) {
+        const refData = refSheet.getDataRange().getValues();
+        for (let i = 1; i < refData.length; i++) {
+            const usedInMonth = refData[i][6];
+            if (usedInMonth !== "" && usedInMonth !== undefined && usedInMonth !== null) {
+                const m = parseInt(usedInMonth);
+                if (m >= 0 && m < 12) {
+                    const amount = Number(refData[i][3]) || 0;
+                    monthlyData[m].creditsUsed += amount;
+                }
+            }
         }
-        
-        // If amount is still 0, try both columns as fallback
-        if (amount === 0) {
-          amount = Number(row[6]) || Number(row[4]) || 0;
-        }
-
-        allExpenses.push({
-          id: expenseId,
-          month: expenseMonth,
-          year: expenseYear,
-          title: isNewFormat ? (row[3] || "") : "",
-          description: isNewFormat ? (row[4] || "") : (row[3] || ""),
-          scope: isNewFormat ? (row[5] || branch) : branch,
-          amount: amount,
-          dateAdded: isNewFormat ? (row[7] || "") : (row[5] || ""),
-        });
-
-        // Add to monthly spent if same year
-        if (
-          expenseYear === CONFIG.year &&
-          expenseMonth >= 0 &&
-          expenseMonth < 12
-        ) {
-          monthlyData[expenseMonth].spent += amount;
-        }
-      }
     }
   }
 
-  // Calculate 30% dev fund for each month
+  // 3. Distribute expenses to monthly data (unified view)
+  allExpenses.forEach(expense => {
+    if (expense.year === CONFIG.year && expense.month >= 0 && expense.month < 12) {
+      let amountToAttribute = expense.amount;
+      const expScope = expense.scope || "Herohalli"; // Default to Herohalli if missing
+
+      // For unified view, we need to sum up the actual expense, not a split.
+      // The split logic is for individual branch views.
+      // If an expense is "Both", it's still a single expense from the total fund.
+      // So, we just add the full amount.
+      monthlyData[expense.month].spent += amountToAttribute;
+    }
+  });
+
+  // 4. Calculate 30% dev fund for each month (on CASH)
   for (let m = 0; m < 12; m++) {
-    monthlyData[m].devFund = Math.round(
-      monthlyData[m].collected * CONFIG.devFundPercent,
-    );
+    const cashCollected = Math.max(0, monthlyData[m].collected - monthlyData[m].creditsUsed);
+    monthlyData[m].devFund = Math.round(cashCollected * CONFIG.devFundPercent);
   }
 
-  // Calculate running carry-forward balance
+  // 5. Calculate running carry-forward balance
   let runningBalance = 0;
   for (let m = 0; m < 12; m++) {
     runningBalance += monthlyData[m].devFund - monthlyData[m].spent;

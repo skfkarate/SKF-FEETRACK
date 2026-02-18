@@ -21,6 +21,25 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+
+  // Load selected month from session storage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("skf_selected_month");
+      if (saved !== null) {
+        setSelectedMonth(parseInt(saved));
+      }
+      setIsStorageLoaded(true);
+    }
+  }, []);
+
+  // Save selected month to session storage when it modifies, but only after initial load
+  useEffect(() => {
+    if (isStorageLoaded && typeof window !== "undefined") {
+      sessionStorage.setItem("skf_selected_month", selectedMonth.toString());
+    }
+  }, [selectedMonth, isStorageLoaded]);
 
   useEffect(() => {
     const u = getAuthenticatedUser();

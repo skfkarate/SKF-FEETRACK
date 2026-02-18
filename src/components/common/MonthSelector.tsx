@@ -56,7 +56,7 @@ export default function MonthSelector({
                 <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <div className="flex-1 text-center overflow-hidden relative h-8">
+            <div className="flex-1 text-center overflow-hidden relative h-8 min-w-[140px]">
                 <div
                     key={selectedMonth}
                     className={`absolute inset-0 flex items-center justify-center font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white uppercase

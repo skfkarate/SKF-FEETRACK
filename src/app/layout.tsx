@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Oswald } from "next/font/google";
+import { Outfit, Oswald } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-outfit",
 });
 
 const oswald = Oswald({
@@ -43,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${oswald.variable} antialiased`}>
+      <body className={`${outfit.variable} ${oswald.variable} antialiased`}>
         {children}
       </body>
     </html>

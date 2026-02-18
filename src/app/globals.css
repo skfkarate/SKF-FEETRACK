@@ -2,11 +2,12 @@
 
 :root {
   /* Core palette — richer, deeper blacks with warm accents */
-  --bg-deep: #06080c;
-  --bg-dark: #0a0d12;
-  --surface: #12161e;
-  --surface-hover: #1a1f2a;
-  --surface-glass: rgba(18, 22, 30, 0.7);
+  --bg-deep: #050505;
+  /* Even deeper black */
+  --bg-dark: #0a0a0a;
+  --surface: #121212;
+  --surface-hover: #1e1e1e;
+  --surface-glass: rgba(18, 18, 18, 0.7);
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.15);
   --border-active: rgba(220, 38, 38, 0.5);
@@ -14,7 +15,8 @@
   /* Brand */
   --accent: #dc2626;
   --accent-hover: #ef4444;
-  --accent-glow: rgba(220, 38, 38, 0.25);
+  --accent-glow: rgba(220, 38, 38, 0.35);
+  /* Stronger glow */
   --gold: #d4af37;
   --gold-dim: rgba(212, 175, 55, 0.3);
 
@@ -28,9 +30,10 @@
   --danger: #ef4444;
 
   /* Text */
-  --text-primary: #f0f0f5;
-  --text-secondary: #8b8fa3;
-  --text-muted: #4a4f63;
+  --text-primary: #ededed;
+  /* Slightly softer white */
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
 
   /* Animation timing */
   --transition-fast: 150ms;
@@ -48,7 +51,7 @@
 body {
   background: var(--bg-deep);
   color: var(--text-primary);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -252,6 +255,30 @@ body {
   }
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -288,6 +315,14 @@ body {
 
 .animate-slide-down {
   animation: slideDown var(--transition-normal) var(--ease-out);
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--transition-fast) var(--ease-out);
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft var(--transition-fast) var(--ease-out);
 }
 
 /* Staggered animation delays */
