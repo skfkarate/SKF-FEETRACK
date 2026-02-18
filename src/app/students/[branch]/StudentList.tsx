@@ -452,13 +452,13 @@ export default function StudentList({ branch }: { branch: string }) {
         {/* Search & Actions */}
         <div className="mb-6 space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search student..."
-              className="input-field pl-10 bg-black/20 border-white/5 focus:border-white/10 placeholder:text-[var(--text-muted)] text-sm"
+              className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-white/15 transition-all placeholder:text-[var(--text-muted)]"
             />
           </div>
 

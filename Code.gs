@@ -190,19 +190,30 @@ const CONFIG = {
   defaultReferralCredit: 500, // Default referral bonus amount
 };
 
+// ============================================
+// SPREADSHEET ID (REQUIRED for web app / trigger contexts)
+// ============================================
+// Paste your Google Sheet ID here (found in the sheet URL between /d/ and /edit)
+// Example URL: https://docs.google.com/spreadsheets/d/YOUR_ID_HERE/edit
+const SPREADSHEET_ID = ""; // <-- PASTE YOUR SPREADSHEET ID HERE
+
 /**
- * Helper: Get the active spreadsheet with a clear error if unavailable.
- * In a container-bound script, getActiveSpreadsheet() should always work.
- * If it fails, it means the script is not bound to a sheet or was run from a standalone context.
+ * Helper: Get the spreadsheet reliably in ANY context.
+ * Tries getActiveSpreadsheet() first (works in container-bound scripts),
+ * falls back to openById() for web app & trigger contexts.
  */
 function getSpreadsheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) {
-    throw new Error(
-      "No active spreadsheet found. Ensure this script is bound to a Google Sheet (Extensions > Apps Script)."
-    );
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) return ss;
+  
+  // Fallback: use SPREADSHEET_ID
+  if (SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
   }
-  return ss;
+  
+  throw new Error(
+    "Cannot access spreadsheet. Either run this from the bound sheet, or set the SPREADSHEET_ID constant at the top of Code.gs."
+  );
 }
 
 /**
@@ -576,7 +587,8 @@ function addNewStudent(payload) {
 }
 
 function getDashboardStats(branch, month) {
-  const students = getStudentsWithPaymentStatus(branch, month);
+  const result = getStudentsWithPaymentStatus(branch, month);
+  const students = result.students;
   const active = students.filter((s) => s.status === "Active");
   const paid = active.filter((s) => s.paid);
 
@@ -888,7 +900,8 @@ function getFinancialSummary(branch, month) {
 
   if (month === -1) {
     // Overall Stats
-    const students = getStudentsWithPaymentStatus(branch, 0); 
+    const studentsResult = getStudentsWithPaymentStatus(branch, 0); 
+    const students = studentsResult.students;
     const active = students.filter((s) => s.status === "Active");
     activeCount = active.length;
     
@@ -930,7 +943,8 @@ function getFinancialSummary(branch, month) {
     paidCount = totalPaidRecords;
   } else {
     // Specific Month
-    const students = getStudentsWithPaymentStatus(branch, month);
+    const studentsResult = getStudentsWithPaymentStatus(branch, month);
+    const students = studentsResult.students;
     const active = students.filter((s) => s.status === "Active");
     const paid = active.filter((s) => s.paid);
     activeCount = active.length;
