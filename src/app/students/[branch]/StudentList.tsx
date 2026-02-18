@@ -1030,14 +1030,14 @@ export default function StudentList({ branch }: { branch: string }) {
               {/* Contact Actions */}
               <div className="flex gap-3 mb-6">
                 <a
-                  href={`tel:${detailStudent.phone || ''}`}
+                  href={`tel:${String(detailStudent.phone || '')}`}
                   className="flex-1 py-3 bg-green-600/20 border border-green-600/50 text-green-400 rounded-lg flex items-center justify-center gap-2 hover:bg-green-600/30 transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Phone className="w-4 h-4" /> Call
                 </a>
                 <a
-                  href={`https://wa.me/${(detailStudent.whatsapp || detailStudent.phone || '').replace(/\D/g, "")}`}
+                  href={`https://wa.me/${String(detailStudent.whatsapp || detailStudent.phone || '').replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 py-3 bg-[#25D366]/20 border border-[#25D366]/50 text-[#25D366] rounded-lg flex items-center justify-center gap-2 hover:bg-[#25D366]/30 transition-colors"

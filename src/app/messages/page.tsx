@@ -263,7 +263,7 @@ export default function MessagesPage() {
   // Using wa.me is faster and often defaults to correct app
   const openWhatsAppBusiness = (phone: string, message: string) => {
     // Clean phone number (remove spaces, dashes, etc.)
-    let cleanPhone = phone.replace(/[\s\-\(\)]/g, "");
+    let cleanPhone = String(phone).replace(/[\s\-\(\)]/g, "");
 
     // Add India country code if not present
     if (!cleanPhone.startsWith("+")) {
@@ -320,7 +320,7 @@ export default function MessagesPage() {
         console.warn(`Unresolved placeholders for ${student.name}`);
       }
 
-      const phone = student.whatsapp || student.phone;
+      const phone = String(student.whatsapp || student.phone || "");
       if (phone) {
         openWhatsAppBusiness(phone, message);
       }

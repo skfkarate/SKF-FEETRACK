@@ -172,8 +172,9 @@ const CONFIG = {
   year: "2026",
   monthStart: 4, // Column E (0-indexed: A=0, B=1, C=2, D=3, E=4) - fallback value
   devFundPercent: 0.30, // 30% of collected fees goes to development fund
-  devFundSheet: "DevFund", // New unified sheet
+  devFundSheet: "DevFund", // Unified sheet
   defaultReferralCredit: 500, // Default referral bonus amount
+  reserveCap: 30000, // Reserve fund — only shown in Overall view
   branches: {
     Herohalli: {
       db: "DB_Herohalli",
@@ -197,10 +198,6 @@ const CONFIG = {
       prefix: "MP-",
     },
   },
-  year: "2026",
-  monthStart: 4, // Column E (0-indexed: A=0, B=1, C=2, D=3, E=4) - fallback value
-  devFundPercent: 0.3, // 30% of collected fees goes to development fund
-  defaultReferralCredit: 500, // Default referral bonus amount
 };
 
 // ============================================
@@ -506,8 +503,8 @@ function getStudentsWithPaymentStatus(branch, month) {
       fee: finalFee, // Reduced fee
       originalFee: originalFee, // Track original
       creditApplied: creditAmount, // Track credit
-      phone: row[5] || "",
-      whatsapp: row[6] || "",
+      phone: String(row[5] || ""),
+      whatsapp: String(row[6] || ""),
       dateOfBirth: row[7] instanceof Date ? row[7].toISOString().split('T')[0] : String(row[7] || ""),
       email: row[8] || "",
       paid: isPaid,
@@ -860,19 +857,12 @@ function getFinancialSummary(branch, month) {
         });
     }
 
+    // Reserve fund: add ONCE in Overall, not per-branch
+    const RESERVE_CAP = CONFIG.reserveCap;
+
     return {
       month: month,
       branch: "Overall",
-      expectedRevenue: hStats.expectedRevenue + mStats.expectedRevenue,
-      actualReceived: hStats.actualReceived + mStats.actualReceived,
-      devFundAllocation: hStats.devFundAllocation + mStats.devFundAllocation,
-      devFundSpent: hStats.devFundSpent + mStats.devFundSpent,
-      devFundBalance: hStats.devFundBalance + mStats.devFundBalance,
-      availableBalance: hStats.availableBalance + mStats.availableBalance,
-      totalContributions: hStats.totalContributions + mStats.totalContributions,
-      admissionCollected: hStats.admissionCollected + mStats.admissionCollected,
-      dressProfit: hStats.dressProfit + mStats.dressProfit,
-      
       activeStudents: hStats.activeStudents + mStats.activeStudents,
       paidStudents: hStats.paidStudents + mStats.paidStudents,
       pendingStudents: hStats.pendingStudents + mStats.pendingStudents,
@@ -880,13 +870,17 @@ function getFinancialSummary(branch, month) {
       collected: hStats.collected + mStats.collected,
       pending: hStats.pending + mStats.pending,
       creditsApplied: hStats.creditsApplied + mStats.creditsApplied,
-      
-      // Merge details
       creditDetails: [...hStats.creditDetails, ...mStats.creditDetails],
-      
+      actualReceived: hStats.actualReceived + mStats.actualReceived + RESERVE_CAP,
+      devFundAllocation: hStats.devFundAllocation + mStats.devFundAllocation,
+      devFundSpent: hStats.devFundSpent + mStats.devFundSpent,
+      devFundBalance: hStats.devFundBalance + mStats.devFundBalance,
+      totalContributions: hStats.totalContributions + mStats.totalContributions,
+      availableBalance: hStats.availableBalance + mStats.availableBalance,
       yearlyBreakdown: mergedBreakdown,
       admissionCollected: hStats.admissionCollected + mStats.admissionCollected,
-      dressProfit: hStats.dressProfit + mStats.dressProfit
+      dressProfit: hStats.dressProfit + mStats.dressProfit,
+      reserveUsed: RESERVE_CAP
     };
   }
 
@@ -901,6 +895,9 @@ function getFinancialSummary(branch, month) {
       devFund: 0,
       expenses: 0
   }));
+
+  // Determine the limit month FIRST (needed by credits loop below)
+  const limitMonth = month === -1 ? 11 : month;
 
   // 1. Calculate Credits Calculation FIRST
   const refSheet = ss.getSheetByName(config.refCredits);
@@ -947,7 +944,7 @@ function getFinancialSummary(branch, month) {
   let totalCollected = 0;
   let totalPending = 0;
   
-  const limitMonth = month === -1 ? 11 : month;
+  // limitMonth already declared above (before credits loop)
   
   if (feesSheet) {
     const feesJanColIndex = getJanColumnIndex(feesSheet);
@@ -1123,19 +1120,18 @@ function getFinancialSummary(branch, month) {
   paidCount = active.filter(s => s.monthStatus === "Paid").length;
   pendingCount = active.filter(s => s.monthStatus === "Pending").length;
 
-  // Reserve Fund Logic (2025 Special)
-  const RESERVE_CAP = 30000;
+  // Reserve Fund Logic — reserve is ONLY added in Overall merge, not per-branch
   let reserveUsed = 0;
   
-  // Check if Dev Fund is in deficit
+  // Check if Dev Fund is in deficit — use reserve to patch
   if (devFundBalance < 0) {
-      reserveUsed = Math.min(-devFundBalance, RESERVE_CAP);
-      devFundBalance += reserveUsed; // Patch up the balance
+      reserveUsed = Math.min(-devFundBalance, CONFIG.reserveCap);
+      devFundBalance += reserveUsed;
   }
 
-  // Override financials with CUMULATIVE values calculated above
+  // Branch view: show EXACT money (collected − credits). No reserve added here.
   const totalExpected = totalCollected + totalPending;
-  const totalActualReceived = (totalCollected - creditsApplied) + RESERVE_CAP; // Include Reserve in Bank Deposit
+  const totalActualReceived = totalCollected - creditsApplied;
   
   return {
     month: month,
@@ -1316,7 +1312,9 @@ function getDevelopmentFundData(branch) {
     expenses: branchExpenses, // Only show expenses relevant to this branch's direct view
     totalContributions: totalContributions,
     totalSpent: totalSpent,
+    totalSpent: totalSpent,
     availableBalance: availableBalance,
+    reserveUsed: 0 // No reserve logic for individual branches in this view (or add if needed)
   };
 }
 
@@ -1420,6 +1418,13 @@ function getDevelopmentFundDataUnified() {
   const totalSpent = monthlyData.reduce((sum, m) => sum + m.spent, 0);
   const availableBalance = totalContributions - totalSpent;
 
+  // 6. Apply Reserve Fund Logic (Patch Deficit)
+  let reserveUsed = 0;
+  if (availableBalance < 0) {
+    reserveUsed = Math.min(-availableBalance, CONFIG.reserveCap);
+    availableBalance += reserveUsed;
+  }
+
   return {
     branch: "All",
     monthlyBreakdown: monthlyData,
@@ -1427,6 +1432,7 @@ function getDevelopmentFundDataUnified() {
     totalContributions: totalContributions,
     totalSpent: totalSpent,
     availableBalance: availableBalance,
+    reserveUsed: reserveUsed
   };
 }
 

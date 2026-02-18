@@ -10,6 +10,7 @@ import {
   X,
   Trash2,
   AlertTriangle,
+  Zap,
 } from "lucide-react";
 import {
   getDevelopmentFundData,
@@ -343,6 +344,12 @@ export default function DevelopmentFundPage() {
                 <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-green-400">
                   ₹{filteredStats.balance.toLocaleString()}
                 </p>
+                {filter === "all" && data?.reserveUsed && data.reserveUsed > 0 && (
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-amber-400/90 font-medium animate-pulse">
+                    <Zap className="w-3 h-3" />
+                    <span>Includes ₹{data.reserveUsed.toLocaleString()} Reserve</span>
+                  </div>
+                )}
                 <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
                   Remaining fund
                 </p>

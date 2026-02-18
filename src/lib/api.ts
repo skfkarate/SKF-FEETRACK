@@ -542,6 +542,7 @@ export interface DevelopmentFundData {
   totalContributions: number;
   totalSpent: number;
   availableBalance: number;
+  reserveUsed?: number;
 }
 
 // Mock data for development fund

@@ -262,10 +262,16 @@ export default function FinancesPage() {
                   <p className="font-[family-name:var(--font-space)] text-3xl sm:text-4xl text-green-400 mb-2 drop-shadow-lg">
                     ₹{data?.actualReceived?.toLocaleString() ?? 0}
                   </p>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] text-[var(--text-muted)]">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] text-[var(--text-muted)] flex-wrap justify-center">
                     <span>Collected (₹{data?.collected?.toLocaleString() ?? 0})</span>
-                    <span>-</span>
+                    <span>−</span>
                     <span>Credits (₹{data?.creditsApplied?.toLocaleString() ?? 0})</span>
+                    {data?.reserveUsed && data.reserveUsed > 0 && branch === "Overall" ? (
+                      <>
+                        <span>+</span>
+                        <span className="text-amber-400">Reserve (₹{data.reserveUsed.toLocaleString()})</span>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </div>
