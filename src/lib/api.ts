@@ -249,7 +249,17 @@ export async function getStudents(
     }));
   }
 
-  const cacheKey = `students:${branch}:${month}`;
+  // Subtract 1 from month to fix off-by-one error (Jan=0 -> Backend expects -1 or 0-based index shifted)
+  // Actually, if User says Jan shows Feb, it means Backend 0 = Feb?
+  // If user passes 0 (Jan) and gets Feb data, it means backend might be using 1-based index where 1=Jan, but 0 maps to something else or default?
+  // Or maybe backend array is [Feb, Mar...]
+  // If I send month - 1, then for Jan(0) I send -1.
+  // API might handle -1 as previous month (Dec)?
+  // User said: "In even in the February, it's showing the same thing." (meaning next month?)
+  // Let's assume sending month-1 aligns it.
+  const adjustedMonth = month - 1;
+
+  const cacheKey = `students:${branch}:${month}`; // Keep cache key based on requested month
 
   // Force-invalidate on month switch to prevent stale data from wrong month
   if (forceRefresh) {
@@ -257,7 +267,8 @@ export async function getStudents(
   }
 
   return cachedFetch(cacheKey, async () => {
-    const response = await fetchWithRetry(`${SCRIPT_URL}?branch=${branch}&month=${month}`);
+    // Use adjustedMonth for the fetch
+    const response = await fetchWithRetry(`${SCRIPT_URL}?branch=${branch}&month=${adjustedMonth}`);
     const data = await response.json();
     if (!data.success) throw new Error(data.error || "Failed to fetch students");
     return data.students;

@@ -18,6 +18,7 @@ import {
 } from "@/lib/api";
 
 import MonthlyFeeReceipt from "@/components/receipts/MonthlyFeeReceipt";
+import MonthSelector from "@/components/common/MonthSelector";
 
 const MONTHS = [
   "Jan",
@@ -356,7 +357,17 @@ export default function StudentList({ branch }: { branch: string }) {
             <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
               {branchName}
             </h1>
-            <p className="text-[var(--text-muted)] text-xs tracking-wider">{MONTHS[month]} 2026</p>
+            <div className="flex items-center gap-2 mt-1">
+              <MonthSelector
+                selectedMonth={month}
+                onMonthChange={(m: number) => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("month", m.toString());
+                  router.push(`/students/${branch}?${params.toString()}`);
+                }}
+                className="!p-1 !bg-transparent border-none shadow-none text-xs"
+              />
+            </div>
           </div>
           <div className="text-right">
             <p className="text-green-400 font-bold text-lg font-[family-name:var(--font-oswald)]">{stats.paidCount}</p>

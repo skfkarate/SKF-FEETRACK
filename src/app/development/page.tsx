@@ -20,6 +20,7 @@ import {
   DevelopmentFundData,
   DevExpense,
 } from "@/lib/api";
+import MonthSelector from "@/components/common/MonthSelector";
 
 const MONTHS = [
   "Jan",
@@ -251,27 +252,38 @@ export default function DevelopmentFundPage() {
       </header>
 
       <main className="max-w-2xl mx-auto p-4">
-        {/* Filter */}
-        <div className="mb-6">
-          <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
-            Expense Filter
-          </label>
-          <select
-            value={filter}
-            onChange={(e) =>
-              setFilter(
-                e.target.value === "all" ? "all" : parseInt(e.target.value)
-              )
-            }
-            className="input-field font-[family-name:var(--font-oswald)] tracking-wider"
-          >
-            <option value="all">ALL TIME (OVERALL)</option>
-            {MONTHS.map((m, i) => (
-              <option key={i} value={i}>
-                {m} 2026
-              </option>
-            ))}
-          </select>
+        {/* View Toggle & Month Selection */}
+        <div className="mb-6 space-y-4">
+          <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-md mx-auto border border-white/5">
+            <button
+              onClick={() => setFilter("all")}
+              className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-oswald)] tracking-wider transition-all duration-300 ${filter === "all"
+                ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
+                : "text-[var(--text-muted)] hover:text-white"
+                }`}
+            >
+              OVERVIEW (ALL)
+            </button>
+            <button
+              onClick={() => setFilter(new Date().getMonth())}
+              className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-oswald)] tracking-wider transition-all duration-300 ${filter !== "all"
+                ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
+                : "text-[var(--text-muted)] hover:text-white"
+                }`}
+            >
+              MONTHLY VIEW
+            </button>
+          </div>
+
+          {filter !== "all" && (
+            <div className="animate-slide-up">
+              <MonthSelector
+                selectedMonth={filter as number}
+                onMonthChange={(m: number) => setFilter(m)}
+                className="max-w-xs mx-auto"
+              />
+            </div>
+          )}
         </div>
 
         {/* Loading */}

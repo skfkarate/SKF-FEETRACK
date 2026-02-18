@@ -14,19 +14,11 @@ import {
   X,
 } from "lucide-react";
 
+import MonthSelector from "@/components/common/MonthSelector";
+
 const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ];
 
 export default function FinancesPage() {
@@ -119,18 +111,11 @@ export default function FinancesPage() {
           <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
             Select Month
           </label>
-          <select
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value))}
-            className="input-field font-[family-name:var(--font-oswald)] tracking-wider"
-          >
-            <option value={-1}>ALL TIME (OVERALL)</option>
-            {MONTHS.map((m, i) => (
-              <option key={i} value={i}>
-                {m} 2026
-              </option>
-            ))}
-          </select>
+          <MonthSelector
+            selectedMonth={month}
+            onMonthChange={setMonth}
+            className="w-full"
+          />
         </div>
 
         {/* Loading */}

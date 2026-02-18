@@ -5,11 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Wallet, MessageSquare } from "lucide-react";
-
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+import MonthSelector from "@/components/common/MonthSelector";
 
 function getAuthenticatedUser(): string | null {
   if (typeof window === "undefined") return null;
@@ -93,22 +89,11 @@ export default function DashboardPage() {
           <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.15em] mb-3 text-center font-medium">
             Select Month
           </p>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-            {MONTHS.map((month, idx) => (
-              <button
-                key={month}
-                onClick={() => setSelectedMonth(idx)}
-                className={`py-3 font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase
-                           transition-all duration-200 rounded-lg border
-                           ${selectedMonth === idx
-                    ? "bg-red-600 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]"
-                    : "bg-[var(--surface)] border-[var(--border)] text-[var(--text-secondary)] hover:border-red-600/50 hover:text-white"
-                  }`}
-              >
-                {month}
-              </button>
-            ))}
-          </div>
+          <MonthSelector
+            selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
+            className="max-w-xs mx-auto"
+          />
         </div>
 
         {/* Branch Cards */}
