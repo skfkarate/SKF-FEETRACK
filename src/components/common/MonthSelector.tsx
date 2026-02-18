@@ -59,7 +59,7 @@ export default function MonthSelector({
             <div className="flex-1 text-center overflow-hidden relative h-8 min-w-[140px]">
                 <div
                     key={selectedMonth}
-                    className={`absolute inset-0 flex items-center justify-center font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white uppercase
+                    className={`absolute inset-0 flex items-center justify-center font-[family-name:var(--font-space)] text-lg tracking-wider text-white uppercase
             ${direction === "left" ? "animate-slide-in-left" : direction === "right" ? "animate-slide-in-right" : "animate-fade-in"}`}
                 >
                     {MONTHS[selectedMonth]} <span className="text-[var(--text-muted)] ml-2 text-sm">2026</span>

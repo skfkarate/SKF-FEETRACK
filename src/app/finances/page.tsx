@@ -73,7 +73,7 @@ export default function FinancesPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
+            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
               FINANCIAL SUMMARY
             </h1>
             <p className="text-[var(--text-muted)] text-xs tracking-wider">
@@ -88,7 +88,7 @@ export default function FinancesPage() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "Herohalli"
+            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-space)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "Herohalli"
               ? "bg-red-600 border-red-500 text-white"
               : "glass-card !rounded-lg text-[var(--text-secondary)] hover:border-red-600/50"
               }`}
@@ -97,7 +97,7 @@ export default function FinancesPage() {
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "MPSC"
+            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-space)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "MPSC"
               ? "bg-red-600 border-red-500 text-white"
               : "glass-card !rounded-lg text-[var(--text-secondary)] hover:border-red-600/50"
               }`}
@@ -152,7 +152,7 @@ export default function FinancesPage() {
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <BarChart3 className="w-3 h-3" /> Expected
                   </p>
-                  <p className="font-[family-name:var(--font-oswald)] text-xl text-blue-400">
+                  <p className="font-[family-name:var(--font-space)] text-xl text-blue-400">
                     ₹{data.expected.toLocaleString()}
                   </p>
                   <p className="text-[var(--text-muted)] text-xs">
@@ -163,7 +163,7 @@ export default function FinancesPage() {
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Collected
                   </p>
-                  <p className="font-[family-name:var(--font-oswald)] text-xl text-green-400">
+                  <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
                     ₹{data.collected.toLocaleString()}
                   </p>
                   <p className="text-[var(--text-muted)] text-xs">
@@ -174,7 +174,7 @@ export default function FinancesPage() {
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Pending
                   </p>
-                  <p className="font-[family-name:var(--font-oswald)] text-xl text-amber-400">
+                  <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
                     ₹{data.pending.toLocaleString()}
                   </p>
                   <p className="text-[var(--text-muted)] text-xs">
@@ -189,7 +189,7 @@ export default function FinancesPage() {
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Gift className="w-3 h-3" /> Credits
                   </p>
-                  <p className="font-[family-name:var(--font-oswald)] text-xl text-purple-400">
+                  <p className="font-[family-name:var(--font-space)] text-xl text-purple-400">
                     -₹{data.creditsApplied.toLocaleString()}
                   </p>
                   <p className="text-[var(--text-muted)] text-xs group-hover:text-purple-400 transition-colors">
@@ -208,7 +208,7 @@ export default function FinancesPage() {
                 <p className="text-[var(--text-secondary)] text-sm mb-2">
                   Amount in Bank (This Month)
                 </p>
-                <p className="font-[family-name:var(--font-oswald)] text-4xl text-green-400">
+                <p className="font-[family-name:var(--font-space)] text-4xl text-green-400">
                   ₹{data.actualReceived.toLocaleString()}
                 </p>
                 <p className="text-[var(--text-muted)] text-sm mt-2">
@@ -231,7 +231,7 @@ export default function FinancesPage() {
                       From this month&apos;s collection
                     </p>
                   </div>
-                  <p className="font-[family-name:var(--font-oswald)] text-xl text-white">
+                  <p className="font-[family-name:var(--font-space)] text-xl text-white">
                     +₹{data.devFundAllocation.toLocaleString()}
                   </p>
                 </div>
@@ -244,7 +244,7 @@ export default function FinancesPage() {
                       Branch development costs
                     </p>
                   </div>
-                  <p className="font-[family-name:var(--font-oswald)] text-xl text-red-400">
+                  <p className="font-[family-name:var(--font-space)] text-xl text-red-400">
                     -₹{data.devFundSpent.toLocaleString()}
                   </p>
                 </div>
@@ -257,7 +257,7 @@ export default function FinancesPage() {
                       Cumulative (all months)
                     </p>
                   </div>
-                  <p className="font-[family-name:var(--font-oswald)] text-2xl text-blue-400">
+                  <p className="font-[family-name:var(--font-space)] text-2xl text-blue-400">
                     ₹{data.devFundBalance.toLocaleString()}
                   </p>
                 </div>
@@ -298,7 +298,7 @@ export default function FinancesPage() {
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl font-bold mb-4 flex items-center gap-2">
+              <h2 className="font-[family-name:var(--font-space)] text-xl font-bold mb-4 flex items-center gap-2">
                 <Gift className="w-5 h-5 text-purple-400" />
                 CREDITS APPLIED
               </h2>
@@ -318,7 +318,7 @@ export default function FinancesPage() {
                           Date: {credit.date}
                         </p>
                       </div>
-                      <span className="font-[family-name:var(--font-oswald)] text-purple-400">
+                      <span className="font-[family-name:var(--font-space)] text-purple-400">
                         -₹{credit.amount}
                       </span>
                     </div>
@@ -332,7 +332,7 @@ export default function FinancesPage() {
 
               <div className="mt-6 pt-4 border-t border-[var(--border)] flex justify-between items-center">
                 <p className="text-[var(--text-secondary)] text-sm">Total Applied</p>
-                <p className="font-[family-name:var(--font-oswald)] text-xl text-purple-400">
+                <p className="font-[family-name:var(--font-space)] text-xl text-purple-400">
                   ₹{data.creditsApplied.toLocaleString()}
                 </p>
               </div>

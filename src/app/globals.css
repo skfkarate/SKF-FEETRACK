@@ -1,39 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  /* Core palette — richer, deeper blacks with warm accents */
-  --bg-deep: #050505;
-  /* Even deeper black */
-  --bg-dark: #0a0a0a;
-  --surface: #121212;
-  --surface-hover: #1e1e1e;
-  --surface-glass: rgba(18, 18, 18, 0.7);
+  /* Core palette — Premium Midnight & Gold */
+  --bg-deep: #030303;
+  /* Deepest black */
+  --bg-dark: #080808;
+  --surface: #0f0f0f;
+  --surface-hover: #161616;
+  --surface-glass: rgba(10, 10, 10, 0.8);
+
+  /* Borders - Subtle Gold/Platinum Tint */
   --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --border-active: rgba(220, 38, 38, 0.5);
+  --border-hover: rgba(212, 175, 55, 0.3);
+  /* Gold hint on hover */
+  --border-active: rgba(220, 38, 38, 0.6);
 
   /* Brand */
   --accent: #dc2626;
   --accent-hover: #ef4444;
-  --accent-glow: rgba(220, 38, 38, 0.35);
-  /* Stronger glow */
+  --accent-glow: rgba(220, 38, 38, 0.4);
+
+  /* Premium Accents */
   --gold: #d4af37;
-  --gold-dim: rgba(212, 175, 55, 0.3);
+  --gold-dim: rgba(212, 175, 55, 0.15);
+  --gold-glow: rgba(212, 175, 55, 0.25);
 
   /* Status */
   --success: #22c55e;
-  --success-dim: rgba(34, 197, 94, 0.15);
+  --success-dim: rgba(34, 197, 94, 0.1);
   --warning: #f59e0b;
-  --warning-dim: rgba(245, 158, 11, 0.15);
+  --warning-dim: rgba(245, 158, 11, 0.1);
   --info: #3b82f6;
-  --info-dim: rgba(59, 130, 246, 0.15);
+  --info-dim: rgba(59, 130, 246, 0.1);
   --danger: #ef4444;
 
   /* Text */
-  --text-primary: #ededed;
-  /* Slightly softer white */
-  --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
+  --text-primary: #f2f2f2;
+  --text-secondary: #a3a3a3;
+  --text-muted: #525252;
 
   /* Animation timing */
   --transition-fast: 150ms;
@@ -51,7 +55,7 @@
 body {
   background: var(--bg-deep);
   color: var(--text-primary);
-  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-family: var(--font-manrope), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

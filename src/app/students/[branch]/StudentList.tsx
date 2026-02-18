@@ -354,7 +354,7 @@ export default function StudentList({ branch }: { branch: string }) {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
+            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
               {branchName}
             </h1>
             <div className="flex items-center gap-2 mt-1">
@@ -370,7 +370,7 @@ export default function StudentList({ branch }: { branch: string }) {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-green-400 font-bold text-lg font-[family-name:var(--font-oswald)]">{stats.paidCount}</p>
+            <p className="text-green-400 font-bold text-lg font-[family-name:var(--font-space)]">{stats.paidCount}</p>
             <p className="text-[var(--text-muted)] text-xs">/ {stats.totalStudents}</p>
           </div>
         </div>
@@ -384,7 +384,7 @@ export default function StudentList({ branch }: { branch: string }) {
               <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
                 Expected
               </p>
-              <p className="font-[family-name:var(--font-oswald)] text-xl text-white">
+              <p className="font-[family-name:var(--font-space)] text-xl text-white">
                 ₹{stats.expectedAmount.toLocaleString()}
               </p>
             </div>
@@ -392,7 +392,7 @@ export default function StudentList({ branch }: { branch: string }) {
               <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
                 Collected
               </p>
-              <p className="font-[family-name:var(--font-oswald)] text-xl text-green-400">
+              <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
                 ₹{stats.collectedAmount.toLocaleString()}
               </p>
             </div>
@@ -400,7 +400,7 @@ export default function StudentList({ branch }: { branch: string }) {
               <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
                 Pending
               </p>
-              <p className="font-[family-name:var(--font-oswald)] text-xl text-amber-400">
+              <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
                 ₹{stats.pendingAmount.toLocaleString()}
               </p>
             </div>
@@ -409,7 +409,7 @@ export default function StudentList({ branch }: { branch: string }) {
                 Rate
               </p>
               <p
-                className={`font-[family-name:var(--font-oswald)] text-xl ${stats.collectionRate >= 80
+                className={`font-[family-name:var(--font-space)] text-xl ${stats.collectionRate >= 80
                   ? "text-green-400"
                   : stats.collectionRate >= 50
                     ? "text-yellow-400"
@@ -501,7 +501,7 @@ export default function StudentList({ branch }: { branch: string }) {
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-[family-name:var(--font-oswald)] text-base tracking-wide truncate">
+                          <h3 className="font-[family-name:var(--font-space)] text-base tracking-wide truncate">
                             {student.name}
                           </h3>
                           {isBreak && (
@@ -531,13 +531,13 @@ export default function StudentList({ branch }: { branch: string }) {
                       {student.monthStatus === "Paid" ? (
                         <button
                           onClick={() => setReceiptStudent(student)}
-                          className="status-paid px-3 py-1.5 rounded-lg font-[family-name:var(--font-oswald)] text-xs tracking-wider hover:brightness-110 transition-all cursor-pointer"
+                          className="status-paid px-3 py-1.5 rounded-lg font-[family-name:var(--font-space)] text-xs tracking-wider hover:brightness-110 transition-all cursor-pointer"
                         >
                           ✓ PAID
                         </button>
                       ) : isInactive ? (
                         <span
-                          className={`px-3 py-1.5 font-[family-name:var(--font-oswald)] text-xs tracking-wider rounded-lg ${isBreak ? "status-break" : "status-discontinued"
+                          className={`px-3 py-1.5 font-[family-name:var(--font-space)] text-xs tracking-wider rounded-lg ${isBreak ? "status-break" : "status-discontinued"
                             }`}
                         >
                           {isBreak ? "ON BREAK" : "LEFT"}
@@ -554,7 +554,7 @@ export default function StudentList({ branch }: { branch: string }) {
                             markingPaid === student.id ||
                             markingStatus === student.id
                           }
-                          className="btn-primary !px-3 !py-1.5 font-[family-name:var(--font-oswald)] text-xs tracking-wider disabled:opacity-50 select-none"
+                          className="btn-primary !px-3 !py-1.5 font-[family-name:var(--font-space)] text-xs tracking-wider disabled:opacity-50 select-none"
                         >
                           {markingPaid === student.id ||
                             markingStatus === student.id
@@ -576,12 +576,12 @@ export default function StudentList({ branch }: { branch: string }) {
         <div className="glass-modal-overlay">
           <div className="glass-modal">
             <div className="p-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider mb-4 text-center">
+              <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-4 text-center">
                 CONFIRM PAYMENT
               </h2>
               <div className="glass-surface p-4 mb-4">
                 <p className="text-[var(--text-muted)] text-xs mb-1">Student</p>
-                <p className="font-[family-name:var(--font-oswald)] text-lg">
+                <p className="font-[family-name:var(--font-space)] text-lg">
                   {confirmStudent.name}
                 </p>
                 <p className="text-[var(--text-muted)] text-xs font-mono">
@@ -663,13 +663,13 @@ export default function StudentList({ branch }: { branch: string }) {
                     setSelectedCreditId(null);
                     setStudentCredits(null);
                   }}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleConfirmPaid}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-green-500 transition-colors"
                 >
                   ✓ CONFIRM
                 </button>
@@ -684,7 +684,7 @@ export default function StudentList({ branch }: { branch: string }) {
         <div className="glass-modal-overlay">
           <div className="glass-modal">
             <div className="p-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider mb-6 text-center">
+              <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-6 text-center">
                 ADD NEW STUDENT
               </h2>
 
@@ -783,14 +783,14 @@ export default function StudentList({ branch }: { branch: string }) {
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleAddStudent}
                   disabled={adding || !newStudent.name.trim()}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
                 >
                   {adding ? "..." : "+ ADD"}
                 </button>
@@ -819,7 +819,7 @@ export default function StudentList({ branch }: { branch: string }) {
             >
               <span className="text-xl">⏸</span>
               <div>
-                <p className="font-[family-name:var(--font-oswald)] tracking-wider text-sm">
+                <p className="font-[family-name:var(--font-space)] tracking-wider text-sm">
                   MARK AS BREAK
                 </p>
                 <p className="text-[var(--text-muted)] text-xs">
@@ -833,7 +833,7 @@ export default function StudentList({ branch }: { branch: string }) {
             >
               <span className="text-xl">⛔</span>
               <div>
-                <p className="font-[family-name:var(--font-oswald)] tracking-wider text-sm">
+                <p className="font-[family-name:var(--font-space)] tracking-wider text-sm">
                   DISCONTINUED
                 </p>
                 <p className="text-[var(--text-muted)] text-xs">
@@ -850,12 +850,12 @@ export default function StudentList({ branch }: { branch: string }) {
         <div className="glass-modal-overlay">
           <div className="glass-modal">
             <div className="p-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider mb-4 text-center text-amber-400">
+              <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-4 text-center text-amber-400">
                 MARK AS BREAK
               </h2>
               <div className="glass-surface p-4 mb-6">
                 <p className="text-[var(--text-muted)] text-xs mb-1">Student</p>
-                <p className="font-[family-name:var(--font-oswald)] text-lg">
+                <p className="font-[family-name:var(--font-space)] text-lg">
                   {confirmBreakStudent.name}
                 </p>
                 <p className="text-[var(--text-muted)] text-xs font-mono">
@@ -872,13 +872,13 @@ export default function StudentList({ branch }: { branch: string }) {
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmBreakStudent(null)}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleConfirmBreak}
-                  className="flex-1 py-3 bg-amber-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-amber-500 transition-colors"
+                  className="flex-1 py-3 bg-amber-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-amber-500 transition-colors"
                 >
                   ⏸ CONFIRM
                 </button>
@@ -893,12 +893,12 @@ export default function StudentList({ branch }: { branch: string }) {
         <div className="glass-modal-overlay">
           <div className="glass-modal">
             <div className="p-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider mb-4 text-center text-gray-400">
+              <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-4 text-center text-gray-400">
                 MARK AS DISCONTINUED
               </h2>
               <div className="glass-surface p-4 mb-6">
                 <p className="text-[var(--text-muted)] text-xs mb-1">Student</p>
-                <p className="font-[family-name:var(--font-oswald)] text-lg">
+                <p className="font-[family-name:var(--font-space)] text-lg">
                   {confirmDiscontinuedStudent.name}
                 </p>
                 <p className="text-[var(--text-muted)] text-xs font-mono">
@@ -916,13 +916,13 @@ export default function StudentList({ branch }: { branch: string }) {
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDiscontinuedStudent(null)}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleConfirmDiscontinued}
-                  className="flex-1 py-3 bg-gray-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-gray-500 transition-colors"
+                  className="flex-1 py-3 bg-gray-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-gray-500 transition-colors"
                 >
                   ⛔ CONFIRM
                 </button>

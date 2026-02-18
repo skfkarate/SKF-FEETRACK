@@ -354,7 +354,7 @@ export default function MessagesPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="font-[family-name:var(--font-oswald)] text-xl font-bold tracking-wider flex items-center gap-2">
+            <h1 className="font-[family-name:var(--font-space)] text-xl font-bold tracking-wider flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-cyan-400" />
               MESSAGE CENTER
             </h1>
@@ -373,7 +373,7 @@ export default function MessagesPage() {
         {/* Message Template Section */}
         <section className="glass-card p-4 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white">
+            <h2 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-white">
               📝 COMPOSE MESSAGE
             </h2>
             <button
@@ -413,7 +413,7 @@ export default function MessagesPage() {
 
         {/* Select Recipients Section */}
         <section className="glass-card p-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
-          <h2 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white mb-4 flex items-center gap-2">
+          <h2 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-white mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-cyan-400" />
             SELECT RECIPIENTS
           </h2>
@@ -573,7 +573,7 @@ export default function MessagesPage() {
         <div className="glass-modal-overlay">
           <div className="glass-modal !max-w-md max-h-[80vh] overflow-y-auto">
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between sticky top-0 bg-[#0F0F0F] z-10 backdrop-blur-xl">
-              <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-cyan-400">
+              <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-cyan-400">
                 PLACEHOLDER GUIDE
               </h3>
               <button
@@ -627,7 +627,7 @@ export default function MessagesPage() {
         <div className="glass-modal-overlay">
           <div className="glass-modal !max-w-md">
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-              <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-cyan-400">
+              <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-cyan-400">
                 MESSAGE PREVIEW
               </h3>
               <button

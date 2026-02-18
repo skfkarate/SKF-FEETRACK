@@ -696,13 +696,13 @@ export default function MonthlyFeeReceipt({
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider"
+            className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider"
           >
             CLOSE
           </button>
           <button
             onClick={downloadReceipt}
-            className="btn-primary flex-1 font-[family-name:var(--font-oswald)] tracking-wider flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 border-none text-white"
+            className="btn-primary flex-1 font-[family-name:var(--font-space)] tracking-wider flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 border-none text-white"
           >
             ⬇ DOWNLOAD
           </button>

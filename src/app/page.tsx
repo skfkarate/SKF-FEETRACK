@@ -54,7 +54,7 @@ export default function LoginPage() {
 
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="font-[family-name:var(--font-oswald)] text-3xl font-bold tracking-[0.2em] gradient-text">
+          <h1 className="font-[family-name:var(--font-space)] text-3xl font-bold tracking-[0.2em] gradient-text">
             SKF KARATE
           </h1>
           <p className="text-[var(--text-muted)] text-xs tracking-[0.15em] mt-2 uppercase">
@@ -74,7 +74,7 @@ export default function LoginPage() {
               onChange={(e) => { setPassword(e.target.value); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && !loading && handleLogin()}
               placeholder="Enter your access code"
-              className="input-field font-[family-name:var(--font-oswald)] tracking-wider text-center text-lg"
+              className="input-field font-[family-name:var(--font-space)] tracking-wider text-center text-lg"
               autoFocus
             />
           </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading || !password.trim()}
-            className="btn-primary w-full font-[family-name:var(--font-oswald)] tracking-[0.15em] text-sm
+            className="btn-primary w-full font-[family-name:var(--font-space)] tracking-[0.15em] text-sm
                        disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
                        flex items-center justify-center gap-2"
           >

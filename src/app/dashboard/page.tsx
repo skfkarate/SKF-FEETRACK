@@ -79,7 +79,7 @@ export default function DashboardPage() {
               height={36}
               className="w-9 h-9 object-contain rounded-full border border-white/10"
             />
-            <h1 className="font-[family-name:var(--font-oswald)] text-xl font-bold tracking-[0.15em]">
+            <h1 className="font-[family-name:var(--font-space)] text-xl font-bold tracking-[0.15em]">
               SKF <span className="text-red-500">KARATE</span>
             </h1>
           </div>
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.2em] mb-2">
             Welcome back
           </p>
-          <h2 className="font-[family-name:var(--font-oswald)] text-3xl font-bold uppercase tracking-wider gradient-text">
+          <h2 className="font-[family-name:var(--font-space)] text-3xl font-bold uppercase tracking-wider gradient-text">
             {user.charAt(0).toUpperCase() + user.slice(1)} Sensei
           </h2>
         </div>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                               transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white">
+                  <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-white">
                     {branch.name}
                   </h3>
                   <p className="text-[var(--text-muted)] text-xs mt-0.5">{branch.subtitle}</p>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
                             transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-green-400 flex items-center gap-2">
+                <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-green-400 flex items-center gap-2">
                   <Wallet className="w-5 h-5" />
                   FINANCIAL SUMMARY
                 </h3>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
                             transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-cyan-400 flex items-center gap-2">
+                <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-cyan-400 flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   MESSAGE CENTER
                 </h3>

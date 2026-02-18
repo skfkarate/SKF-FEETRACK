@@ -140,7 +140,7 @@ export default function ReferralCreditsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
+            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
               REFERRAL CREDITS
             </h1>
             <p className="text-[var(--text-muted)] text-xs tracking-wider">{branchName}</p>
@@ -153,7 +153,7 @@ export default function ReferralCreditsPage() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "Herohalli"
+            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-space)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "Herohalli"
               ? "bg-red-600 border-red-500 text-white"
               : "glass-card !rounded-lg text-[var(--text-secondary)] hover:border-red-600/50"
               }`}
@@ -162,7 +162,7 @@ export default function ReferralCreditsPage() {
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-oswald)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "MPSC"
+            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-space)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "MPSC"
               ? "bg-red-600 border-red-500 text-white"
               : "glass-card !rounded-lg text-[var(--text-secondary)] hover:border-red-600/50"
               }`}
@@ -235,7 +235,7 @@ export default function ReferralCreditsPage() {
                             <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">
                               Referred From
                             </p>
-                            <p className="font-[family-name:var(--font-oswald)] tracking-wide text-white text-sm">
+                            <p className="font-[family-name:var(--font-space)] tracking-wide text-white text-sm">
                               {credit.studentName}
                             </p>
                             <p className="text-[var(--text-muted)] text-xs font-mono">
@@ -246,7 +246,7 @@ export default function ReferralCreditsPage() {
                             <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-0.5">
                               Referred To
                             </p>
-                            <p className="font-[family-name:var(--font-oswald)] tracking-wide text-white text-sm">
+                            <p className="font-[family-name:var(--font-space)] tracking-wide text-white text-sm">
                               {credit.reason || "-"}
                             </p>
                           </div>
@@ -273,7 +273,7 @@ export default function ReferralCreditsPage() {
                               Credit Amount
                             </p>
                             <p
-                              className={`font-[family-name:var(--font-oswald)] text-xl ${credit.isUsed
+                              className={`font-[family-name:var(--font-space)] text-xl ${credit.isUsed
                                 ? "text-[var(--text-muted)]"
                                 : "text-green-400"
                                 }`}
@@ -296,7 +296,7 @@ export default function ReferralCreditsPage() {
         <div className="glass-modal-overlay">
           <div className="glass-modal !max-w-sm">
             <div className="p-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider mb-6 text-center">
+              <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider mb-6 text-center">
                 ADD REFERRAL CREDIT
               </h2>
 
@@ -405,14 +405,14 @@ export default function ReferralCreditsPage() {
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleAddCredit}
                   disabled={adding || !newCredit.studentId}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
                 >
                   {adding ? (
                     "..."

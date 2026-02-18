@@ -243,7 +243,7 @@ export default function DevelopmentFundPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
+            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
               DEVELOPMENT FUND
             </h1>
             <p className="text-[var(--text-muted)] text-xs tracking-wider">All Branches • 30% Allocation</p>
@@ -257,7 +257,7 @@ export default function DevelopmentFundPage() {
           <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-md mx-auto border border-white/5">
             <button
               onClick={() => setFilter("all")}
-              className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-oswald)] tracking-wider transition-all duration-300 ${filter === "all"
+              className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${filter === "all"
                 ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
                 : "text-[var(--text-muted)] hover:text-white"
                 }`}
@@ -266,7 +266,7 @@ export default function DevelopmentFundPage() {
             </button>
             <button
               onClick={() => setFilter(new Date().getMonth())}
-              className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-oswald)] tracking-wider transition-all duration-300 ${filter !== "all"
+              className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${filter !== "all"
                 ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
                 : "text-[var(--text-muted)] hover:text-white"
                 }`}
@@ -313,7 +313,7 @@ export default function DevelopmentFundPage() {
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <PiggyBank className="w-3 h-3" /> 30% Fund
                 </p>
-                <p className="font-[family-name:var(--font-oswald)] text-xl text-blue-400">
+                <p className="font-[family-name:var(--font-space)] text-xl text-blue-400">
                   ₹{filteredStats.allocated.toLocaleString()}
                 </p>
               </div>
@@ -321,7 +321,7 @@ export default function DevelopmentFundPage() {
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Package className="w-3 h-3" /> Spent
                 </p>
-                <p className="font-[family-name:var(--font-oswald)] text-xl text-amber-400">
+                <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
                   ₹{filteredStats.spent.toLocaleString()}
                 </p>
               </div>
@@ -329,7 +329,7 @@ export default function DevelopmentFundPage() {
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Balance
                 </p>
-                <p className="font-[family-name:var(--font-oswald)] text-xl text-green-400">
+                <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
                   ₹{filteredStats.balance.toLocaleString()}
                 </p>
               </div>
@@ -361,7 +361,7 @@ export default function DevelopmentFundPage() {
                               key={m.month}
                               className="border-b border-[var(--border)]/50 hover:bg-white/[0.02] transition-colors"
                             >
-                              <td className="p-3 font-[family-name:var(--font-oswald)] tracking-wider text-sm">
+                              <td className="p-3 font-[family-name:var(--font-space)] tracking-wider text-sm">
                                 {MONTHS[m.month]}
                               </td>
                               <td className="p-3 text-right text-[var(--text-secondary)]">
@@ -430,7 +430,7 @@ export default function DevelopmentFundPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="font-[family-name:var(--font-oswald)] tracking-wide truncate text-sm">
+                              <p className="font-[family-name:var(--font-space)] tracking-wide truncate text-sm">
                                 {expense.title || expense.description}
                               </p>
                               <span
@@ -444,7 +444,7 @@ export default function DevelopmentFundPage() {
                               {expense.dateAdded}
                             </p>
                           </div>
-                          <p className="font-[family-name:var(--font-oswald)] text-lg text-amber-400 ml-4">
+                          <p className="font-[family-name:var(--font-space)] text-lg text-amber-400 ml-4">
                             -₹{expense.amount.toLocaleString()}
                           </p>
                         </div>
@@ -463,7 +463,7 @@ export default function DevelopmentFundPage() {
           <div className="glass-modal !max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider">
                   ADD EXPENSE
                 </h2>
                 <button
@@ -597,13 +597,13 @@ export default function DevelopmentFundPage() {
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
                 >
                   CANCEL
                 </button>
                 <button
                   onClick={handleAddExpenseClick}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-green-500 transition-colors"
                 >
                   REVIEW & SAVE
                 </button>
@@ -620,7 +620,7 @@ export default function DevelopmentFundPage() {
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <AlertTriangle className="w-5 h-5 text-amber-400" />
-                <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider">
                   CONFIRM EXPENSE
                 </h2>
               </div>
@@ -652,7 +652,7 @@ export default function DevelopmentFundPage() {
                 </div>
                 <div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase">Amount</p>
-                  <p className="text-amber-400 font-[family-name:var(--font-oswald)] text-xl">
+                  <p className="text-amber-400 font-[family-name:var(--font-space)] text-xl">
                     ₹{newExpense.amount.toLocaleString()}
                   </p>
                 </div>
@@ -662,14 +662,14 @@ export default function DevelopmentFundPage() {
                 <button
                   onClick={() => setShowConfirmModal(false)}
                   disabled={adding}
-                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm disabled:opacity-50"
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm disabled:opacity-50"
                 >
                   GO BACK
                 </button>
                 <button
                   onClick={handleConfirmSave}
                   disabled={adding}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
                 >
                   {adding ? (
                     "SAVING..."
@@ -691,7 +691,7 @@ export default function DevelopmentFundPage() {
           <div className="glass-modal !max-w-md">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider">
                   EXPENSE DETAILS
                 </h2>
                 <button
@@ -716,7 +716,7 @@ export default function DevelopmentFundPage() {
 
                 <div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase mb-1">Title</p>
-                  <p className="font-[family-name:var(--font-oswald)] text-lg tracking-wide">
+                  <p className="font-[family-name:var(--font-space)] text-lg tracking-wide">
                     {selectedExpense.title || selectedExpense.description}
                   </p>
                 </div>
@@ -733,7 +733,7 @@ export default function DevelopmentFundPage() {
 
                 <div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase mb-1">Amount</p>
-                  <p className="font-[family-name:var(--font-oswald)] text-2xl text-amber-400">
+                  <p className="font-[family-name:var(--font-space)] text-2xl text-amber-400">
                     ₹{selectedExpense.amount.toLocaleString()}
                   </p>
                 </div>
@@ -756,7 +756,7 @@ export default function DevelopmentFundPage() {
                   <button
                     onClick={handleDeleteExpense}
                     disabled={deleting}
-                    className="w-full py-3 bg-red-600/20 border border-red-600/50 text-red-400 rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-red-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-red-600/20 border border-red-600/50 text-red-400 rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-red-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     {deleting ? "DELETING..." : "DELETE EXPENSE"}

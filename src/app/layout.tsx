@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Outfit, Oswald } from "next/font/google";
+import { Space_Grotesk, Manrope } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-manrope",
 });
 
-const oswald = Oswald({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-oswald",
+  variable: "--font-space",
 });
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${oswald.variable} antialiased`}>
+      <body className={`${manrope.variable} ${spaceGrotesk.variable} antialiased`}>
         {children}
       </body>
     </html>
