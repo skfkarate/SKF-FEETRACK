@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 export default function NavMenu() {
     const router = useRouter();
-    const [user, setUser] = useState<string | null>(null);
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem("skf_user");
-        if (storedUser) {
-            setUser(storedUser);
-        }
-    }, []);
+    const [user] = useState<string | null>(() => {
+        if (typeof window === "undefined") return null;
+        return localStorage.getItem("skf_user");
+    });
 
     const handleLogout = () => {
         localStorage.removeItem("skf_user");

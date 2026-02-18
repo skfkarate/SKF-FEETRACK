@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Wallet, MessageSquare, PiggyBank } from "lucide-react";
+import { ArrowRight, Wallet, PiggyBank } from "lucide-react";
 import Navbar from "@/components/common/Navbar";
 import NavMenu from "@/components/common/NavMenu";
 
@@ -19,16 +19,13 @@ function getAuthenticatedUser(): string | null {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<string | null>(null);
+  const [user] = useState<string | null>(() => getAuthenticatedUser());
 
   useEffect(() => {
-    const u = getAuthenticatedUser();
-    if (!u) {
+    if (!user) {
       router.push("/");
-    } else {
-      setUser(u);
     }
-  }, [router]);
+  }, [user, router]);
 
   if (!user) return null;
 

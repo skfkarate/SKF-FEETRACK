@@ -21,23 +21,19 @@ import {
 import MonthSelector from "@/components/common/MonthSelector";
 import Navbar from "@/components/common/Navbar";
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
+
 
 export default function FinancesPage() {
   const router = useRouter();
   const [branch, setBranch] = useState("Herohalli");
   const [month, setMonth] = useState<number>(0); // Start with safe default
-  const [isClient, setIsClient] = useState(false);
+
   const [data, setData] = useState<FinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreditDetails, setShowCreditDetails] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     setMonth(new Date().getMonth()); // Set actual month on client side only
 
     const storedUser = localStorage.getItem("skf_user");
@@ -68,7 +64,7 @@ export default function FinancesPage() {
     loadData();
   }, [loadData]);
 
-  const branchName = branch === "MPSC" ? "MP SPORTS CLUB" : "HEROHALLI";
+
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-deep)" }}>

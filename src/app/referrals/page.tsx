@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Plus, Gift, X, CheckCircle2, Clock, Zap, Wallet, Trophy } from "lucide-react";
+import { Plus, Gift, X, Zap, Wallet, Trophy } from "lucide-react";
 import {
   getReferralCredits,
   addReferralCredit,
@@ -268,8 +267,8 @@ export default function ReferralCreditsPage() {
                         key={credit.id}
                         onClick={() => setSelectedCredit(credit)}
                         className={`glass-card p-4 transition-all duration-200 cursor-pointer group ${credit.isUsed
-                            ? "opacity-60 hover:opacity-80 border-white/5"
-                            : "hover:border-green-400/30 border-white/10"
+                          ? "opacity-60 hover:opacity-80 border-white/5"
+                          : "hover:border-green-400/30 border-white/10"
                           }`}
                       >
                         <div className="flex items-start justify-between">
@@ -280,8 +279,8 @@ export default function ReferralCreditsPage() {
                               </p>
                               <span
                                 className={`text-[10px] px-2 py-0.5 border rounded-full ${credit.isUsed
-                                    ? "bg-amber-600/10 text-amber-500 border-amber-600/30"
-                                    : "bg-green-600/20 text-green-400 border-green-600/50"
+                                  ? "bg-amber-600/10 text-amber-500 border-amber-600/30"
+                                  : "bg-green-600/20 text-green-400 border-green-600/50"
                                   }`}
                               >
                                 {credit.isUsed ? "Redeemed" : "Active"}

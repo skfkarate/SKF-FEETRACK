@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Gift, X, Calendar, PartyPopper } from "lucide-react";
+import { Gift, X, PartyPopper } from "lucide-react";
 import { getUpcomingBirthdays, BirthdayStudent } from "@/lib/api";
 
 export default function BirthdayWidget() {
@@ -83,8 +83,8 @@ export default function BirthdayWidget() {
                                         <div
                                             key={student.id}
                                             className={`p-3 rounded-xl border flex items-center gap-3 transition-colors ${isToday
-                                                    ? "bg-pink-500/10 border-pink-500/30"
-                                                    : "bg-white/5 border-white/5 hover:bg-white/10"
+                                                ? "bg-pink-500/10 border-pink-500/30"
+                                                : "bg-white/5 border-white/5 hover:bg-white/10"
                                                 }`}
                                         >
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${isToday ? "bg-pink-500 text-white shadow-lg shadow-pink-500/20" : "bg-white/10 text-white/40"
