@@ -11,6 +11,9 @@ import {
   X,
   Trash2,
   AlertTriangle,
+  Gift,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import {
   getDevelopmentFundData,
@@ -18,6 +21,9 @@ import {
   deleteDevelopmentExpense,
   DevelopmentFundData,
   DevExpense,
+  getReferralCredits,
+  addReferralCredit,
+  ReferralCreditsData,
 } from "@/lib/api";
 import MonthSelector from "@/components/common/MonthSelector";
 import Navbar from "@/components/common/Navbar";
@@ -71,6 +77,17 @@ export default function DevelopmentFundPage() {
   );
   const [deleting, setDeleting] = useState(false);
 
+  // Credits Tab
+  const [activeTab, setActiveTab] = useState<"expenses" | "credits">("expenses");
+  const [creditsData, setCreditsData] = useState<ReferralCreditsData | null>(null);
+  const [loadingCredits, setLoadingCredits] = useState(false);
+  const [creditBranch, setCreditBranch] = useState("Herohalli");
+
+  // Add Credit Modal
+  const [showAddCreditModal, setShowAddCreditModal] = useState(false);
+  const [newCredit, setNewCredit] = useState({ studentId: "", amount: 500, reason: "Referral" });
+  const [addingCredit, setAddingCredit] = useState(false);
+
   useEffect(() => {
     const storedUser = localStorage.getItem("skf_user");
     const loginTime = localStorage.getItem("skf_login_time");
@@ -99,6 +116,41 @@ export default function DevelopmentFundPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const loadCredits = useCallback(async () => {
+    setLoadingCredits(true);
+    try {
+      const result = await getReferralCredits(creditBranch);
+      setCreditsData(result);
+    } catch (err) {
+      console.error("Failed to load credits:", err);
+    } finally {
+      setLoadingCredits(false);
+    }
+  }, [creditBranch]);
+
+  useEffect(() => {
+    if (activeTab === "credits") {
+      loadCredits();
+    }
+  }, [activeTab, loadCredits]);
+
+  const handleAddCredit = async () => {
+    if (!newCredit.studentId.trim()) { alert("Enter student ID"); return; }
+    if (newCredit.amount <= 0) { alert("Enter valid amount"); return; }
+    if (!newCredit.reason.trim()) { alert("Enter reason"); return; }
+    setAddingCredit(true);
+    try {
+      await addReferralCredit(creditBranch, newCredit.studentId.trim(), newCredit.amount, newCredit.reason.trim());
+      setShowAddCreditModal(false);
+      setNewCredit({ studentId: "", amount: 500, reason: "Referral" });
+      loadCredits();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to add credit");
+    } finally {
+      setAddingCredit(false);
+    }
+  };
 
   const handleAddExpenseClick = () => {
     // Validate before showing confirmation
@@ -410,60 +462,213 @@ export default function DevelopmentFundPage() {
               </div>
             )}
 
-            {/* Expenses Section */}
-            <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
-                  Expenses{" "}
-                  {filter !== "all" ? `(${MONTHS[filter]})` : "(All Time)"}
-                </p>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="px-4 py-2 text-sm rounded-lg border border-green-600/50 text-green-400 hover:bg-green-600 hover:text-white transition-all duration-200 font-medium tracking-wide"
-                >
-                  + Add Expense
-                </button>
-              </div>
-              <div className="space-y-2">
-                {filteredExpenses.length === 0 ? (
-                  <div className="glass-card p-6 text-center text-[var(--text-muted)] text-sm">
-                    No expenses recorded for this period
-                  </div>
-                ) : (
-                  filteredExpenses
-                    .sort((a, b) => b.id.localeCompare(a.id))
-                    .map((expense) => (
-                      <div
-                        key={expense.id}
-                        onClick={() => setSelectedExpense(expense)}
-                        className="glass-card p-4 cursor-pointer hover:border-red-600/30 transition-all duration-200"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-[family-name:var(--font-space)] tracking-wide truncate text-sm">
-                                {expense.title || expense.description}
+            {/* Tab Toggle: Expenses | Credits */}
+            <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-xs mx-auto border border-white/5 mb-6 animate-fade-in" style={{ animationDelay: "150ms" }}>
+              <button
+                onClick={() => setActiveTab("expenses")}
+                className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 ${activeTab === "expenses"
+                  ? "bg-[var(--surface)] text-white shadow-lg border border-white/10"
+                  : "text-[var(--text-muted)] hover:text-white"
+                  }`}
+              >
+                <Package className="w-3.5 h-3.5" /> EXPENSES
+              </button>
+              <button
+                onClick={() => setActiveTab("credits")}
+                className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 ${activeTab === "credits"
+                  ? "bg-purple-600/80 text-white shadow-lg border border-purple-500/30"
+                  : "text-[var(--text-muted)] hover:text-white"
+                  }`}
+              >
+                <Gift className="w-3.5 h-3.5" /> CREDITS
+              </button>
+            </div>
+
+            {/* EXPENSES TAB */}
+            {activeTab === "expenses" && (
+              <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
+                    Expenses{" "}
+                    {filter !== "all" ? `(${MONTHS[filter]})` : "(All Time)"}
+                  </p>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="px-4 py-2 text-sm rounded-lg border border-green-600/50 text-green-400 hover:bg-green-600 hover:text-white transition-all duration-200 font-medium tracking-wide"
+                  >
+                    + Add Expense
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {filteredExpenses.length === 0 ? (
+                    <div className="glass-card p-6 text-center text-[var(--text-muted)] text-sm">
+                      No expenses recorded for this period
+                    </div>
+                  ) : (
+                    filteredExpenses
+                      .sort((a, b) => b.id.localeCompare(a.id))
+                      .map((expense) => (
+                        <div
+                          key={expense.id}
+                          onClick={() => setSelectedExpense(expense)}
+                          className="glass-card p-4 cursor-pointer hover:border-red-600/30 transition-all duration-200"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-[family-name:var(--font-space)] tracking-wide truncate text-sm">
+                                  {expense.title || expense.description}
+                                </p>
+                                <span
+                                  className={`text-[10px] px-2 py-0.5 border rounded-full ${getScopeBadgeColor(expense.scope || "Both")}`}
+                                >
+                                  {getScopeLabel(expense.scope || "Both")}
+                                </span>
+                              </div>
+                              <p className="text-[var(--text-muted)] text-xs">
+                                {MONTHS[expense.month]} {expense.year} •{" "}
+                                {expense.dateAdded}
                               </p>
-                              <span
-                                className={`text-[10px] px-2 py-0.5 border rounded-full ${getScopeBadgeColor(expense.scope || "Both")}`}
-                              >
-                                {getScopeLabel(expense.scope || "Both")}
-                              </span>
                             </div>
-                            <p className="text-[var(--text-muted)] text-xs">
-                              {MONTHS[expense.month]} {expense.year} •{" "}
-                              {expense.dateAdded}
+                            <p className="font-[family-name:var(--font-space)] text-base sm:text-lg text-amber-400 ml-4">
+                              -₹{expense.amount.toLocaleString()}
                             </p>
                           </div>
-                          <p className="font-[family-name:var(--font-space)] text-base sm:text-lg text-amber-400 ml-4">
-                            -₹{expense.amount.toLocaleString()}
-                          </p>
                         </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CREDITS TAB */}
+            {activeTab === "credits" && (
+              <div className="animate-fade-in">
+                {/* Branch Selector */}
+                <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-sm mx-auto border border-white/5 mb-5">
+                  <button
+                    onClick={() => setCreditBranch("Herohalli")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${creditBranch === "Herohalli"
+                      ? "bg-red-600/90 text-white shadow-lg border border-white/10"
+                      : "text-[var(--text-muted)] hover:text-white"
+                      }`}
+                  >
+                    HEROHALLI
+                  </button>
+                  <button
+                    onClick={() => setCreditBranch("MPSC")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${creditBranch === "MPSC"
+                      ? "bg-blue-600/90 text-white shadow-lg border border-white/10"
+                      : "text-[var(--text-muted)] hover:text-white"
+                      }`}
+                  >
+                    MP SPORTS CLUB
+                  </button>
+                </div>
+
+                {/* Credits Loading */}
+                {loadingCredits && (
+                  <div className="text-center py-12">
+                    <div className="spinner mx-auto mb-4" />
+                    <p className="text-[var(--text-muted)] text-sm">Loading credits...</p>
+                  </div>
+                )}
+
+                {/* Credits Content */}
+                {!loadingCredits && creditsData && (
+                  <>
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(168, 85, 247, 0.25)" }}>
+                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                          <Gift className="w-10 h-10 text-purple-400" />
+                        </div>
+                        <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Available
+                        </p>
+                        <p className="font-[family-name:var(--font-space)] text-xl text-purple-400">
+                          ₹{creditsData.totalUnused.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                          {creditsData.credits.filter(c => !c.isUsed).length} credits unused
+                        </p>
                       </div>
-                    ))
+                      <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                          <CheckCircle2 className="w-10 h-10 text-green-400" />
+                        </div>
+                        <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Used
+                        </p>
+                        <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
+                          ₹{creditsData.totalUsed.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
+                          {creditsData.credits.filter(c => c.isUsed).length} credits applied
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Add Credit Button + List */}
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
+                        All Credits ({creditsData.credits.length})
+                      </p>
+                      <button
+                        onClick={() => setShowAddCreditModal(true)}
+                        className="px-4 py-2 text-sm rounded-lg border border-purple-600/50 text-purple-400 hover:bg-purple-600 hover:text-white transition-all duration-200 font-medium tracking-wide"
+                      >
+                        + Add Credit
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {creditsData.credits.length === 0 ? (
+                        <div className="glass-card p-6 text-center text-[var(--text-muted)] text-sm">
+                          No referral credits for this branch
+                        </div>
+                      ) : (
+                        creditsData.credits
+                          .sort((a, b) => (a.isUsed === b.isUsed ? 0 : a.isUsed ? 1 : -1))
+                          .map((credit) => (
+                            <div
+                              key={credit.id}
+                              className={`glass-card p-4 transition-all duration-200 ${credit.isUsed ? "opacity-60" : "hover:border-purple-600/30"
+                                }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-[family-name:var(--font-space)] tracking-wide text-sm truncate">
+                                      {credit.studentName}
+                                    </p>
+                                    <span
+                                      className={`text-[10px] px-2 py-0.5 border rounded-full ${credit.isUsed
+                                        ? "bg-green-600/20 text-green-400 border-green-600/50"
+                                        : "bg-purple-600/20 text-purple-400 border-purple-600/50"
+                                        }`}
+                                    >
+                                      {credit.isUsed ? "Used" : "Available"}
+                                    </span>
+                                  </div>
+                                  <p className="text-[var(--text-muted)] text-xs">
+                                    {credit.reason} • {credit.dateEarned}
+                                    {credit.isUsed && credit.usedDate && ` • Applied: ${credit.usedDate}`}
+                                  </p>
+                                </div>
+                                <p className={`font-[family-name:var(--font-space)] text-lg ml-4 ${credit.isUsed ? "text-green-400" : "text-purple-400"
+                                  }`}>
+                                  ₹{credit.amount.toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
+            )}
           </>
         )}
       </main>
@@ -784,6 +989,108 @@ export default function DevelopmentFundPage() {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Credit Modal */}
+      {showAddCreditModal && (
+        <div className="glass-modal-overlay">
+          <div className="glass-modal !max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-purple-400" /> ADD CREDIT
+                </h2>
+                <button
+                  onClick={() => setShowAddCreditModal(false)}
+                  className="text-[var(--text-muted)] hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[10px] text-purple-400/80 uppercase tracking-wider mb-2">
+                    Branch: {creditBranch === "MPSC" ? "MP Sports Club" : "Herohalli"}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Student ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={newCredit.studentId}
+                    onChange={(e) => setNewCredit({ ...newCredit, studentId: e.target.value })}
+                    placeholder={creditBranch === "Herohalli" ? "e.g., H001" : "e.g., M001"}
+                    className="input-field"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Amount (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    value={newCredit.amount || ""}
+                    onChange={(e) => setNewCredit({ ...newCredit, amount: parseInt(e.target.value) || 0 })}
+                    placeholder="500"
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Reason *
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {["Referral", "Tournament", "Achievement", "Other"].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setNewCredit({ ...newCredit, reason: r })}
+                        className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${newCredit.reason === r
+                          ? "bg-purple-600/30 border-purple-500/50 text-purple-300"
+                          : "bg-white/5 border-white/10 text-[var(--text-muted)] hover:border-white/20"
+                          }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                  {newCredit.reason === "Other" && (
+                    <input
+                      type="text"
+                      value=""
+                      onChange={(e) => setNewCredit({ ...newCredit, reason: e.target.value })}
+                      placeholder="Enter custom reason..."
+                      className="input-field mt-2"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowAddCreditModal(false)}
+                  className="btn-ghost flex-1 font-[family-name:var(--font-space)] tracking-wider text-sm"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleAddCredit}
+                  disabled={addingCredit}
+                  className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-[family-name:var(--font-space)] tracking-wider text-sm hover:bg-purple-500 transition-colors disabled:opacity-50"
+                >
+                  {addingCredit ? "ADDING..." : "ADD CREDIT"}
+                </button>
               </div>
             </div>
           </div>

@@ -35,15 +35,15 @@ export default function LoginPage() {
       className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden"
       style={{
         background:
-          "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.12) 0%, var(--bg-deep) 60%)",
+          "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.06) 0%, var(--bg-deep) 50%)",
       }}
     >
-      {/* Ambient glow - visible on mobile */}
+      {/* Ambient glow */}
       <div
-        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[100vw] h-[60vh] opacity-40 pointer-events-none"
+        className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] opacity-30 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse, rgba(220,38,38,0.20) 0%, transparent 70%)",
+            "radial-gradient(ellipse, rgba(220,38,38,0.12) 0%, transparent 70%)",
         }}
       />
 
