@@ -376,6 +376,11 @@ function doPost(e) {
           payload.feeType
         );
         break;
+
+      // Birthday Actions
+      case "get_upcoming_birthdays":
+        result = getUpcomingBirthdays();
+        break;
       
       // Debug - show raw fees data structure
       case "debug_fees":
@@ -1767,5 +1772,129 @@ function onOpen() {
     .createMenu("🥋 SKF Karate")
     .addItem("Setup All Sheets", "setupAllSheets")
     .addItem("Add Sample Data", "addSampleData")
+    .addItem("Setup Birthday Notifications", "setupBirthdayTrigger") // Add menu item
     .addToUi();
+}
+
+// ============================================
+// BIRTHDAY NOTIFICATIONS
+// ============================================
+
+function getUpcomingBirthdays() {
+  const ss = getSpreadsheet();
+  const today = new Date();
+  // Normalize today to midnight for consistent comparison
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
+  const results = [];
+  const branches = ["Herohalli", "MPSC"];
+  
+  branches.forEach(branch => {
+    const config = CONFIG.branches[branch];
+    const dbSheet = ss.getSheetByName(config.db);
+    if (!dbSheet) return;
+    
+    // Get all data
+    const data = dbSheet.getDataRange().getValues();
+    
+    // 0=ID, 1=Name, 3=Status, 7=DOB
+    for (let i = 1; i < data.length; i++) {
+        const studentId = String(data[i][0]).trim();
+        if (!studentId) continue;
+        
+        const status = String(data[i][3]).trim();
+        // Only notify for Active students
+        if (status !== 'Active') continue;
+        
+        const rawDOB = data[i][7];
+        // Ensure it's a date object
+        if (!rawDOB || !(rawDOB instanceof Date)) continue;
+        
+        const birthMonth = rawDOB.getMonth();
+        const birthDate = rawDOB.getDate();
+        
+        // Calculate next birthday
+        const currentYear = today.getFullYear();
+        let nextBday = new Date(currentYear, birthMonth, birthDate);
+        
+        // If passed this year, look at next year
+        if (nextBday < todayMid) {
+            nextBday.setFullYear(currentYear + 1);
+        }
+        
+        // Calculate diff in days
+        const diffTime = nextBday - todayMid;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        // Check availability (within next 7 days)
+        if (diffDays >= 0 && diffDays <= 7) {
+            results.push({
+                name: data[i][1],
+                branch: branch,
+                id: studentId,
+                date: nextBday.toISOString(),
+                originalDate: rawDOB.toISOString(),
+                day: birthDate,
+                month: nextBday.toLocaleString('en-US', { month: 'short' }),
+                turningAge: nextBday.getFullYear() - rawDOB.getFullYear(),
+                daysUntil: diffDays
+            });
+        }
+    }
+  });
+  
+  // Sort by closest first
+  results.sort((a, b) => a.daysUntil - b.daysUntil);
+  return results;
+}
+
+function checkBirthdaysAndNotify() {
+  const upcoming = getUpcomingBirthdays();
+  // Filter for: 7 days, 2 days, 0 days
+  const notifyList = upcoming.filter(s => s.daysUntil === 7 || s.daysUntil === 2 || s.daysUntil === 0);
+  
+  if (notifyList.length === 0) return;
+  
+  // Send email to the effective user (script owner/runner)
+  const recipient = Session.getActiveUser().getEmail();
+  
+  if (!recipient) {
+    Logger.log("No recipient email found.");
+    return;
+  }
+  
+  let subject = `🎂 Upcoming Birthdays Alert - ${notifyList.length} Student(s)`;
+  let body = "Upcoming Student Birthdays:\n\n";
+  
+  notifyList.forEach(s => {
+      let timeline = "";
+      if (s.daysUntil === 0) timeline = "TODAY! 🎉";
+      else if (s.daysUntil === 1) timeline = "Tomorrow";
+      else timeline = `in ${s.daysUntil} days`;
+      
+      body += `• ${s.name} (${s.branch}) - ${timeline} (Turning ${s.turningAge})\n`;
+  });
+  
+  body += "\nSKF Feetracker System";
+  
+  MailApp.sendEmail(recipient, subject, body);
+}
+
+function setupBirthdayTrigger() {
+  // Delete existing triggers to avoid duplicates
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === "checkBirthdaysAndNotify") {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  // Create new daily trigger at 8 AM
+  ScriptApp.newTrigger("checkBirthdaysAndNotify")
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+    
+  return "Birthday notification trigger setup complete (Daily at 8 AM).";
 }

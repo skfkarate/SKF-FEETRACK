@@ -36,6 +36,8 @@ export const viewport = {
   userScalable: false, // Prevent zooming for "app-like" feel
 };
 
+import BirthdayWidget from "@/components/common/BirthdayWidget";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,6 +47,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${manrope.variable} ${spaceGrotesk.variable} antialiased`}>
         {children}
+        <BirthdayWidget />
       </body>
     </html>
   );

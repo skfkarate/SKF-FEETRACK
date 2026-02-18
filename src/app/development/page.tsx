@@ -225,13 +225,13 @@ export default function DevelopmentFundPage() {
   const getScopeBadgeColor = (scope: string): string => {
     switch (scope) {
       case "Herohalli":
-        return "bg-blue-600/20 text-blue-400 border-blue-600/50";
+        return "bg-red-600/20 text-red-400 border-red-600/50";
       case "MPSC":
-        return "bg-purple-600/20 text-purple-400 border-purple-600/50";
+        return "bg-blue-600/20 text-blue-400 border-blue-600/50";
       case "Both":
         return "bg-green-600/20 text-green-400 border-green-600/50";
       default:
-        return "bg-yellow-600/20 text-yellow-400 border-yellow-600/50";
+        return "bg-yellow-600/20 text-yellow-500 border-yellow-600/50";
     }
   };
 

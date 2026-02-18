@@ -44,6 +44,18 @@ export interface Student {
   dressStatus?: "Paid" | "Pending";
 }
 
+export interface BirthdayStudent {
+  id: string;
+  name: string;
+  branch: string;
+  date: string;
+  originalDate: string;
+  day: number;
+  month: string; // Short month name (e.g. "Feb")
+  turningAge: number;
+  daysUntil: number;
+}
+
 export interface DashboardStats {
   totalStudents: number;
   activeStudents: number;
@@ -353,6 +365,53 @@ export async function markNonRecurringFeePaid(
   formData.append("branch", branch);
   formData.append("feeType", feeType);
   await fetchWithRetry(SCRIPT_URL, { method: "POST", body: formData });
+}
+
+
+export async function getUpcomingBirthdays(): Promise<BirthdayStudent[]> {
+  if (isMockData()) {
+    await new Promise((r) => setTimeout(r, 500));
+    const today = new Date();
+    const mocks: BirthdayStudent[] = [];
+
+    // Student 1: Birthday Today
+    mocks.push({
+      id: "SKF005",
+      name: "Rahul Kumar",
+      branch: "Herohalli",
+      date: new Date().toISOString(),
+      originalDate: "2010-01-01",
+      day: today.getDate(),
+      month: today.toLocaleString('default', { month: 'short' }),
+      turningAge: 16,
+      daysUntil: 0
+    });
+
+    // Student 2: Birthday in 2 days
+    const next2 = new Date();
+    next2.setDate(today.getDate() + 2);
+    mocks.push({
+      id: "SKF012",
+      name: "Sneha Reddy",
+      branch: "MPSC",
+      date: next2.toISOString(),
+      originalDate: "2012-05-15",
+      day: next2.getDate(),
+      month: next2.toLocaleString('default', { month: 'short' }),
+      turningAge: 14,
+      daysUntil: 2
+    });
+
+    return mocks;
+  }
+
+  const response = await fetchWithRetry(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "get_upcoming_birthdays" }),
+  });
+  const data = await response.json();
+  if (!data.success) throw new Error(data.error || "Failed to fetch birthdays");
+  return data.data;
 }
 
 export async function getDashboardStats(

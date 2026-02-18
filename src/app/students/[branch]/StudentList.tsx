@@ -17,6 +17,9 @@ import {
   AlertCircle,
   Ticket,
   Shirt,
+  Phone,
+  MessageCircle,
+  X,
 } from "lucide-react";
 
 import {
@@ -111,6 +114,9 @@ export default function StudentList({ branch }: { branch: string }) {
   } | null>(null);
 
   const [markingStatus, setMarkingStatus] = useState<string | null>(null);
+
+  // Detail Modal
+  const [detailStudent, setDetailStudent] = useState<Student | null>(null);
 
   const month = parseInt(
     searchParams.get("month") || new Date().getMonth().toString(),
@@ -571,7 +577,8 @@ export default function StudentList({ branch }: { branch: string }) {
                 return (
                   <div
                     key={student.id}
-                    className={`glass-card p-4 transition-all duration-200 animate-slide-up hover:border-white/10 group ${isDiscontinued
+                    onClick={() => setDetailStudent(student)}
+                    className={`glass-card p-4 transition-all duration-200 animate-slide-up hover:border-white/10 group cursor-pointer ${isDiscontinued
                       ? "opacity-40 grayscale"
                       : isBreak
                         ? "opacity-60"
@@ -992,6 +999,75 @@ export default function StudentList({ branch }: { branch: string }) {
                 >
                   {adding ? "..." : "+ ADD"}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Detail Modal */}
+      {detailStudent && (
+        <div className="glass-modal-overlay" onClick={() => setDetailStudent(null)}>
+          <div className="glass-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="font-[family-name:var(--font-space)] text-xl tracking-wider text-white">
+                  {detailStudent.name}
+                </h2>
+                <p className="text-[var(--text-muted)] text-sm font-mono mt-1">
+                  {detailStudent.id}
+                </p>
+              </div>
+              <button
+                onClick={() => setDetailStudent(null)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-[var(--text-muted)]" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Contact Actions */}
+              <div className="flex gap-3 mb-6">
+                <a
+                  href={`tel:${detailStudent.phone}`}
+                  className="flex-1 py-3 bg-green-600/20 border border-green-600/50 text-green-400 rounded-lg flex items-center justify-center gap-2 hover:bg-green-600/30 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Phone className="w-4 h-4" /> Call
+                </a>
+                <a
+                  href={`https://wa.me/${(detailStudent.whatsapp || detailStudent.phone).replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 bg-[#25D366]/20 border border-[#25D366]/50 text-[#25D366] rounded-lg flex items-center justify-center gap-2 hover:bg-[#25D366]/30 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </a>
+              </div>
+
+              <div className="glass-surface p-4 space-y-3">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-[var(--text-muted)] text-sm">Parent</span>
+                  <span className="text-white text-sm font-medium">{detailStudent.parentName || "-"}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-[var(--text-muted)] text-sm">DOB</span>
+                  <span className="text-white text-sm font-medium">{detailStudent.dateOfBirth ? new Date(detailStudent.dateOfBirth).toLocaleDateString() : "-"}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-[var(--text-muted)] text-sm">Join Month</span>
+                  <span className="text-white text-sm font-medium">{MONTHS[detailStudent.joinMonth]}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-[var(--text-muted)] text-sm">Monthly Fee</span>
+                  <span className="text-white text-sm font-medium">₹{detailStudent.fee}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)] text-sm">Status</span>
+                  <span className={`text-sm font-medium ${detailStudent.status === 'Active' ? 'text-green-400' : 'text-red-400'}`}>{detailStudent.status}</span>
+                </div>
               </div>
             </div>
           </div>
