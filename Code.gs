@@ -1125,9 +1125,19 @@ function getFinancialSummary(branch, month) {
   paidCount = active.filter(s => s.monthStatus === "Paid").length;
   pendingCount = active.filter(s => s.monthStatus === "Pending").length;
 
+  // Reserve Fund Logic (2025 Special)
+  const RESERVE_CAP = 30000;
+  let reserveUsed = 0;
+  
+  // Check if Dev Fund is in deficit
+  if (devFundBalance < 0) {
+      reserveUsed = Math.min(-devFundBalance, RESERVE_CAP);
+      devFundBalance += reserveUsed; // Patch up the balance
+  }
+
   // Override financials with CUMULATIVE values calculated above
   const totalExpected = totalCollected + totalPending;
-  const totalActualReceived = totalCollected - creditsApplied; // creditsApplied is also summed 0..limitMonth
+  const totalActualReceived = (totalCollected - creditsApplied) + RESERVE_CAP; // Include Reserve in Bank Deposit
   
   return {
     month: month,
@@ -1144,11 +1154,12 @@ function getFinancialSummary(branch, month) {
     devFundAllocation: devFundAllocation,
     devFundSpent: devFundSpent,
     devFundBalance: devFundBalance,
-    totalContributions: cumulativeAllocation,
+    totalContributions: cumulativeAllocation, // Keep track of raw allocation
     availableBalance: devFundBalance, // same as balance
     yearlyBreakdown: yearlyBreakdown,
     admissionCollected: admissionCollected,
-    dressProfit: dressProfit
+    dressProfit: dressProfit,
+    reserveUsed: reserveUsed
   };
 }
     

@@ -15,6 +15,7 @@ import {
   Wallet,
   Ticket,
   Shirt,
+  Zap,
 } from "lucide-react";
 
 import MonthSelector from "@/components/common/MonthSelector";
@@ -335,6 +336,12 @@ export default function FinancesPage() {
                   <p className="font-[family-name:var(--font-space)] text-xl sm:text-2xl text-blue-400">
                     ₹{(data?.devFundBalance ?? data?.availableBalance ?? 0).toLocaleString()}
                   </p>
+                  {data?.reserveUsed && data.reserveUsed > 0 ? (
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-amber-400/90 font-medium animate-pulse">
+                      <Zap className="w-3 h-3" />
+                      <span>Includes ₹{data.reserveUsed.toLocaleString()} Reserve</span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

@@ -828,6 +828,7 @@ export interface FinancialSummary {
   // New Fields
   admissionCollected?: number;
   dressProfit?: number;
+  reserveUsed?: number;
 }
 
 export async function getFinancialSummary(
@@ -857,6 +858,7 @@ export async function getFinancialSummary(
       yearlyBreakdown: [],
       admissionCollected: 5000,
       dressProfit: 2000,
+      reserveUsed: 0,
     };
   }
 
