@@ -788,6 +788,16 @@ export async function markPaidWithCredit(
 // FINANCIAL SUMMARY
 // ============================================
 
+export interface YearlyBreakdownItem {
+  month: string;
+  revenue: number; // Cash revenue
+  devFund: number; // Allocated
+  expenses: number; // Spent
+  net: number; // Net Operational
+  cumulativeRevenue: number;
+  cumulativeBank: number;
+}
+
 export interface FinancialSummary {
   month: number;
   branch: string;
@@ -798,7 +808,7 @@ export interface FinancialSummary {
   collected: number;
   pending: number;
   creditsApplied: number;
-  creditDetails?: {
+  creditDetails: {
     studentName: string;
     amount: number;
     reason: string;
@@ -808,10 +818,13 @@ export interface FinancialSummary {
   actualReceived: number;
   devFundAllocation: number;
   devFundSpent: number;
-  devFundBalance: number; // calculated as allocation - spent
+  devFundBalance: number;
   totalContributions: number;
   availableBalance: number;
-  yearlyBreakdown: any[];
+
+  // Analysis
+  yearlyBreakdown: YearlyBreakdownItem[];
+
   // New Fields
   admissionCollected?: number;
   dressProfit?: number;
@@ -840,6 +853,7 @@ export async function getFinancialSummary(
       devFundBalance: 4250,
       totalContributions: 5250,
       availableBalance: 4250,
+      creditDetails: [],
       yearlyBreakdown: [],
       admissionCollected: 5000,
       dressProfit: 2000,

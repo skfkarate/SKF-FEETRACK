@@ -840,12 +840,71 @@ function markNonRecurringFeePaid(studentId, branch, feeType) {
  * Get comprehensive financial summary for bank reconciliation
  */
 function getFinancialSummary(branch, month) {
+  // Handle "Overall" request - Recursively aggregate both branches
+  if (branch === "Overall" || branch === "Both") {
+    const hStats = getFinancialSummary("Herohalli", month);
+    const mStats = getFinancialSummary("MPSC", month);
+    
+    // Merge yearly breakdown
+    const mergedBreakdown = [];
+    for (let i = 0; i < 12; i++) {
+        const hMonth = hStats.yearlyBreakdown[i] || {};
+        const mMonth = mStats.yearlyBreakdown[i] || {};
+        
+        mergedBreakdown.push({
+            month: hMonth.month || mMonth.month,
+            revenue: (hMonth.revenue || 0) + (mMonth.revenue || 0),
+            devFund: (hMonth.devFund || 0) + (mMonth.devFund || 0),
+            expenses: (hMonth.expenses || 0) + (mMonth.expenses || 0),
+            net: (hMonth.net || 0) + (mMonth.net || 0),
+            cumulativeRevenue: (hMonth.cumulativeRevenue || 0) + (mMonth.cumulativeRevenue || 0),
+            cumulativeBank: (hMonth.cumulativeBank || 0) + (mMonth.cumulativeBank || 0)
+        });
+    }
+
+    return {
+      month: month,
+      branch: "Overall",
+      expectedRevenue: hStats.expectedRevenue + mStats.expectedRevenue,
+      actualReceived: hStats.actualReceived + mStats.actualReceived,
+      devFundAllocation: hStats.devFundAllocation + mStats.devFundAllocation,
+      devFundSpent: hStats.devFundSpent + mStats.devFundSpent,
+      devFundBalance: hStats.devFundBalance + mStats.devFundBalance,
+      availableBalance: hStats.availableBalance + mStats.availableBalance,
+      totalContributions: hStats.totalContributions + mStats.totalContributions,
+      admissionCollected: hStats.admissionCollected + mStats.admissionCollected,
+      dressProfit: hStats.dressProfit + mStats.dressProfit,
+      
+      activeStudents: hStats.activeStudents + mStats.activeStudents,
+      paidStudents: hStats.paidStudents + mStats.paidStudents,
+      pendingStudents: hStats.pendingStudents + mStats.pendingStudents,
+      expected: hStats.expected + mStats.expected,
+      collected: hStats.collected + mStats.collected,
+      pending: hStats.pending + mStats.pending,
+      creditsApplied: hStats.creditsApplied + mStats.creditsApplied,
+      
+      // Merge details
+      creditDetails: [...hStats.creditDetails, ...mStats.creditDetails],
+      
+      yearlyBreakdown: mergedBreakdown,
+      admissionCollected: hStats.admissionCollected + mStats.admissionCollected,
+      dressProfit: hStats.dressProfit + mStats.dressProfit
+    };
+  }
+
   const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
 
-  // 1. Calculate Credits Calculation FIRST to use in Dev Fund
+  // Initialize breakdown structure
+  const monthlyStats = Array(12).fill(null).map((_, i) => ({
+      revenue: 0,
+      devFund: 0,
+      expenses: 0
+  }));
+
+  // 1. Calculate Credits Calculation FIRST
   const refSheet = ss.getSheetByName(config.refCredits);
   const creditsMap = {}; // month -> totalCreditAmount
   let totalCreditsAllTime = 0;
@@ -855,21 +914,16 @@ function getFinancialSummary(branch, month) {
   if (refSheet) {
     const refData = refSheet.getDataRange().getValues();
     for (let i = 1; i < refData.length; i++) {
+        // ... (existing credit logic)
       const usedInMonth = refData[i][6];
-      if (
-        usedInMonth !== "" &&
-        usedInMonth !== undefined &&
-        usedInMonth !== null
-      ) {
+      if (usedInMonth !== "" && usedInMonth !== undefined && usedInMonth !== null) {
         const m = parseInt(usedInMonth);
         const amount = Number(refData[i][3]) || 0;
         
-        // Add to map
         if (!creditsMap[m]) creditsMap[m] = 0;
         creditsMap[m] += amount;
         totalCreditsAllTime += amount;
 
-        // If specific period matched
         if (month === -1 || m === month) {
           creditsApplied += amount;
           creditDetails.push({
@@ -879,7 +933,7 @@ function getFinancialSummary(branch, month) {
             description: refData[i][8] || "",
             date: refData[i][7] instanceof Date 
               ? refData[i][7].toISOString().split('T')[0] 
-              : String(refData[i][7]), // Explicit string conversion
+              : String(refData[i][7]),
           });
         }
       }
@@ -890,13 +944,14 @@ function getFinancialSummary(branch, month) {
   const feesSheet = ss.getSheetByName(config.fees);
   let devFundAllocation = 0;
   let cumulativeAllocation = 0;
-  const limitMonth = month === -1 ? 11 : month; // Iterate up to current request
+  const limitMonth = month === -1 ? 11 : month;
   
   if (feesSheet) {
     const feesJanColIndex = getJanColumnIndex(feesSheet);
     const feesData = feesSheet.getDataRange().getValues();
 
-    for (let m = 0; m <= limitMonth; m++) {
+    // Iterate ALL months for breakdown, but only sum up to limitMonth for totals
+    for (let m = 0; m < 12; m++) {
       let monthCollected = 0;
       const monthCol = feesJanColIndex + m;
 
@@ -907,12 +962,17 @@ function getFinancialSummary(branch, month) {
         }
       }
 
-      // SUBTRACT CREDITS for this month to get Actual Cash
       const monthCredits = creditsMap[m] || 0;
       const monthCash = Math.max(0, monthCollected - monthCredits);
-
       const allocation = Math.round(monthCash * CONFIG.devFundPercent);
-      cumulativeAllocation += allocation;
+
+      // Track monthly stats
+      monthlyStats[m].revenue = monthCash;
+      monthlyStats[m].devFund = allocation;
+
+      if (m <= limitMonth) {
+          cumulativeAllocation += allocation;
+      }
 
       if (month !== -1 && m === month) {
         devFundAllocation = allocation;
@@ -924,142 +984,161 @@ function getFinancialSummary(branch, month) {
     }
   }
 
-  // 4. NEW: Calculate Admission and Dress Fees (One-time)
-  let admissionCollected = 0;
-  let dressProfit = 0; // (Fee - Cost)
-  
-  const dbSheet = ss.getSheetByName(config.db);
-  if (dbSheet) {
-    const dbData = dbSheet.getDataRange().getValues();
-    // Indices: 9=JoinMonth, 11=AdmFee, 12=AdmStatus, 13=DressFee, 14=DressCost, 15=DressStatus
-    
-    for (let i = 1; i < dbData.length; i++) {
-        const row = dbData[i];
-        const joinMonth = parseInt(row[9]); // JoinMonth
-        
-        // Filter by month (if specific month requested)
-        if (month !== -1 && joinMonth !== month) continue;
-        if (isNaN(joinMonth)) continue; // Skip if no join month (likely old student)
-
-        // Admission Fee
-        if (String(row[12]).trim() === "Paid") {
-            admissionCollected += Number(row[11]) || 0;
-        }
-
-        // Dress Fee Margin
-        if (String(row[15]).trim() === "Paid") {
-            const fee = Number(row[13]) || 0;
-            const cost = Number(row[14]) || 0;
-            dressProfit += (fee - cost);
-        }
-    }
-  }
-
   // 3. Dev Fund Expenses
-  const devFundSheet = ss.getSheetByName(config.devFund);
   let devFundSpent = 0;
   let cumulativeExpenses = 0;
   let devFundBalance = 0;
 
-  // Replaced with getAllDevelopmentExpenses logic
   const allExpenses = getAllDevelopmentExpenses();
-  
-  // Calculate expenses for this branch/period
 
   allExpenses.forEach(expense => {
-    const expMonth = expense.month;
+    const expMonth = expense.month; // 0-based
     const expAmount = expense.amount;
-    const expScope = expense.scope || "Herohalli"; // Default to Herohalli if missing (legacy)
+    const expScope = expense.scope || "Herohalli";
     
-    // Determine cost share based on scope
     let share = 0;
     if (expScope === branch) {
-      share = 1; // 100%
+      share = 1;
     } else if (expScope === "Both" || expScope === "Others" || !["Herohalli", "MPSC"].includes(expScope)) {
-      share = 0.5; // 50% split for shared
-    } else {
-      share = 0; // belongs to other branch
+      share = 0.5;
     }
     
     const weightedAmount = expAmount * share;
+    
+    if (expMonth >= 0 && expMonth < 12) {
+        monthlyStats[expMonth].expenses += weightedAmount;
+    }
 
-    // For balance: Cumulative up to limit month
-    if (expMonth <= limitMonth) {
+    if (expense.month <= limitMonth) {
        cumulativeExpenses += weightedAmount;
     }
 
-    // For "spent this period"
     if (month === -1) {
-       devFundSpent += weightedAmount; // YTD
-    } else if (expMonth === month) {
+       devFundSpent += weightedAmount;
+    } else if (expense.month === month) {
        devFundSpent += weightedAmount;
     }
   });
 
   devFundBalance = cumulativeAllocation - cumulativeExpenses;
 
-  // 4. Student Payment Stats (Live Calculation for display)
+  // 4. Calculate Admission & Dress Profit
+  let admissionCollected = 0;
+  let dressProfit = 0;
+  
+  const dbSheet = ss.getSheetByName(config.db);
+  if (dbSheet) {
+      // ... (existing db logic)
+    const dbData = dbSheet.getDataRange().getValues();
+    for (let i = 1; i < dbData.length; i++) {
+        const row = dbData[i];
+        const joinMonth = parseInt(row[9]);
+        
+        // Count for totals logic
+        const matchesRequest = (month === -1) || (joinMonth === month);
+        
+        if (matchesRequest) {
+            if (String(row[12]).trim() === "Paid") admissionCollected += Number(row[11]) || 0;
+            if (String(row[15]).trim() === "Paid") dressProfit += (Number(row[13]) || 0) - (Number(row[14]) || 0);
+        }
+        
+        // Add to breakdown (assuming joinMonth is when it was paid)
+        if (!isNaN(joinMonth) && joinMonth >= 0 && joinMonth < 12) {
+             if (String(row[12]).trim() === "Paid") monthlyStats[joinMonth].revenue += Number(row[11]) || 0;
+             if (String(row[15]).trim() === "Paid") monthlyStats[joinMonth].revenue += (Number(row[13]) || 0) - (Number(row[14]) || 0);
+             // Dev fund is 30% of standard fees only? Or total revenue?
+             // Usually Dev Fund is from Tuition Fees.
+             // If Admission/Dress also contribute 30%, uncomment below:
+             // monthlyStats[joinMonth].devFund += ( ... ) * 0.30;
+             // Assuming Dev Fund is ONLY on tuition fees for now based on previous logic (calculated from feesSheet).
+             // (User said "minusing the development fee... and whatever is left out")
+             // So Admission/Dress go 100% to Bank? Or also subject to split?
+             // Keeping it simple: Admission/Dress are EXTRA operational cash.
+        }
+    }
+  }
+
+  // 5. Construct Yearly Breakdown
+  const yearlyBreakdown = [];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  let runRevenue = 0;
+  let runBank = 0;
+
+  for (let m = 0; m < 12; m++) {
+      const s = monthlyStats[m];
+      const netForBank = s.revenue - s.devFund; // Operational Cash = Revenue - DevFundAllocation
+      
+      runRevenue += s.revenue;
+      runBank += netForBank; 
+      // Note: Expenses are paid from Dev Fund, so they don't reduce "Operational Bank Balance" directly 
+      // regarding the separation of concerns. 
+      // "Bank" = (70% Tuition + Admission + Dress).
+      // "Dev Fund" = (30% Tuition) - Expenses.
+      
+      yearlyBreakdown.push({
+          month: monthNames[m],
+          revenue: s.revenue,
+          devFund: s.devFund,
+          expenses: s.expenses,
+          net: netForBank,
+          cumulativeRevenue: runRevenue,
+          cumulativeBank: runBank
+      });
+  }
+
+  // 6. Student Payment Stats (Live)
   let expected = 0;
   let collected = 0;
   let activeCount = 0;
   let paidCount = 0;
 
+  // ... (existing student stats logic) - reusing for single branch
   if (month === -1) {
-    // Overall Stats
     const studentsResult = getStudentsWithPaymentStatus(branch, 0); 
     const students = studentsResult.students;
     const active = students.filter((s) => s.status === "Active");
     activeCount = active.length;
     
     let totalPaidRecords = 0;
-    
     const feesLookup = {};
     if (feesSheet) {
-      const feesData = feesSheet.getDataRange().getValues();
-      for (let i = 1; i < feesData.length; i++) {
-        const sid = String(feesData[i][0]).trim();
-        if (sid && String(feesData[i][3]).trim() === CONFIG.year) {
-          feesLookup[sid] = feesData[i];
-        }
+      const fd = feesSheet.getDataRange().getValues();
+      for (let i = 1; i < fd.length; i++) {
+        if(String(fd[i][0]).trim() && String(fd[i][3]).trim() === CONFIG.year) 
+            feesLookup[String(fd[i][0]).trim()] = fd[i];
       }
     }
-
-    const currentMonthIndex = new Date().getMonth();
-    const feesJanColIndex = feesSheet ? getJanColumnIndex(feesSheet) : CONFIG.monthStart;
-
-    active.forEach((student) => {
-      const baseFee = student.originalFee || student.fee || 500;
-      const joinedAt = student.joinMonth || 0;
-      const feeRow = feesLookup[student.id];
-
-      for (let m = 0; m <= currentMonthIndex; m++) {
-        if (m < joinedAt) continue;
-        expected += baseFee;
-
-        if (feeRow) {
-          const colIndex = feesJanColIndex + m;
-          const status = String(feeRow[colIndex] || "").trim();
-          if (status === "Paid" || status === "PAID") {
-            collected += baseFee;
-            totalPaidRecords++;
-          }
-        }
-      }
+    const janIdx = feesSheet ? getJanColumnIndex(feesSheet) : CONFIG.monthStart;
+    const curM = new Date().getMonth();
+    
+    active.forEach(s => {
+       const base = s.originalFee || s.fee || 500;
+       const join = s.joinMonth || 0;
+       const row = feesLookup[s.id];
+       for(let m=0; m<=curM; m++) {
+           if(m < join) continue;
+           expected += base;
+           if(row) {
+               const st = String(row[janIdx + m] || "").trim();
+               if(st === "Paid" || st === "PAID") {
+                   collected += base;
+                   totalPaidRecords++;
+               }
+           }
+       }
     });
     paidCount = totalPaidRecords;
   } else {
     // Specific Month
-    const studentsResult = getStudentsWithPaymentStatus(branch, month);
-    const students = studentsResult.students;
-    const active = students.filter((s) => s.status === "Active");
-    const paid = active.filter((s) => s.paid);
+    const result = getStudentsWithPaymentStatus(branch, month);
+    const active = result.students.filter(s => s.status === "Active");
+    const paid = active.filter(s => s.paid);
     activeCount = active.length;
     paidCount = paid.length;
     expected = active.reduce((sum, s) => sum + (s.originalFee || s.fee || 0), 0);
     collected = paid.reduce((sum, s) => sum + (s.originalFee || s.fee || 0), 0);
   }
 
-  // Actual received is collected fees minus credits used
   const actualReceived = collected - creditsApplied;
 
   return {
@@ -1077,12 +1156,11 @@ function getFinancialSummary(branch, month) {
     devFundAllocation: devFundAllocation,
     admissionCollected: admissionCollected,
     dressProfit: dressProfit,
-    // Development Fund Data
     devFundSpent: devFundSpent,
     totalContributions: cumulativeAllocation,
     availableBalance: devFundBalance,
-    devFundBalance: devFundBalance, // FIX: Frontend expects this key
-    yearlyBreakdown: [], // Not needed for this view
+    devFundBalance: devFundBalance,
+    yearlyBreakdown: yearlyBreakdown,
     admissionCollected: admissionCollected || 0,
     dressProfit: dressProfit || 0
   };
