@@ -54,9 +54,9 @@ const isMockData = () => !SCRIPT_URL;
 // FETCH HELPERS - Timeout & Retry
 // ============================================
 
-const DEFAULT_TIMEOUT = 10000; // 10 seconds (faster fail, smarter retry)
-const MAX_RETRIES = 2; // Reduced retries for faster perceived performance
-const INITIAL_RETRY_DELAY = 500; // 500ms
+const DEFAULT_TIMEOUT = 8000; // 8 seconds - snappier error feedback
+const MAX_RETRIES = 2;
+const INITIAL_RETRY_DELAY = 300; // 300ms - faster retries
 
 /**
  * Fetch with timeout support
@@ -125,7 +125,6 @@ async function fetchWithRetry(
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
-  isRefreshing: boolean;
 }
 
 // In-memory cache store
@@ -133,18 +132,15 @@ const cache = new Map<string, CacheEntry<unknown>>();
 
 // Cache durations (in milliseconds)
 const CACHE_TTL = {
-  students: 2 * 60 * 1000,      // 2 minutes - changes frequently
-  financial: 5 * 60 * 1000,     // 5 minutes - moderate changes
-  devFund: 5 * 60 * 1000,       // 5 minutes
-  referrals: 5 * 60 * 1000,     // 5 minutes
-  branchCounts: 10 * 60 * 1000, // 10 minutes - rarely changes
+  students: 60 * 1000,           // 1 minute - fast sync for fee tracking
+  financial: 2 * 60 * 1000,     // 2 minutes
+  devFund: 3 * 60 * 1000,       // 3 minutes
+  referrals: 3 * 60 * 1000,     // 3 minutes
+  branchCounts: 5 * 60 * 1000,  // 5 minutes - rarely changes
 };
 
-// Stale duration - how long to serve stale data while refreshing
-const STALE_DURATION = 5 * 60 * 1000; // 5 minutes (was 30 - too long, caused wrong month data)
-
 /**
- * Get data from cache if available and fresh
+ * Get TTL for a cache key based on prefix
  */
 function getTTLForKey(key: string): number {
   if (key.startsWith('students:')) return CACHE_TTL.students;
@@ -152,29 +148,24 @@ function getTTLForKey(key: string): number {
   if (key.startsWith('devFund:')) return CACHE_TTL.devFund;
   if (key.startsWith('referral:')) return CACHE_TTL.referrals;
   if (key.startsWith('branchCounts')) return CACHE_TTL.branchCounts;
-  return CACHE_TTL.students; // default
+  return CACHE_TTL.students;
 }
 
-function getCached<T>(key: string): { data: T | null; isStale: boolean } {
+/**
+ * Get data from cache if available and fresh (simple TTL only — no stale data)
+ */
+function getCached<T>(key: string): T | null {
   const entry = cache.get(key) as CacheEntry<T> | undefined;
-
-  if (!entry) {
-    return { data: null, isStale: false };
-  }
+  if (!entry) return null;
 
   const age = Date.now() - entry.timestamp;
-  const ttl = getTTLForKey(key);
-
-  if (age < ttl) {
-    // Fresh data
-    return { data: entry.data, isStale: false };
-  } else if (age < STALE_DURATION) {
-    // Stale but usable
-    return { data: entry.data, isStale: true };
+  if (age < getTTLForKey(key)) {
+    return entry.data;
   }
 
-  // Too old, don't use
-  return { data: null, isStale: false };
+  // Expired — remove and return null
+  cache.delete(key);
+  return null;
 }
 
 /**
@@ -184,22 +175,7 @@ function setCache<T>(key: string, data: T): void {
   cache.set(key, {
     data,
     timestamp: Date.now(),
-    isRefreshing: false,
   });
-}
-
-/**
- * Mark cache entry as being refreshed (to prevent duplicate fetches)
- */
-function markRefreshing(key: string): boolean {
-  const entry = cache.get(key);
-  if (entry?.isRefreshing) {
-    return false; // Already refreshing
-  }
-  if (entry) {
-    entry.isRefreshing = true;
-  }
-  return true;
 }
 
 /**
@@ -219,38 +195,19 @@ export function invalidateCache(pattern?: string): void {
 }
 
 /**
- * Cached fetch wrapper with stale-while-revalidate
- * Returns cached data instantly, refreshes in background if stale
+ * Simple cached fetch — returns fresh cache hit or fetches new data.
+ * NO stale-while-revalidate to prevent showing wrong month's data.
  */
 async function cachedFetch<T>(
   cacheKey: string,
   fetcher: () => Promise<T>,
-  onBackgroundUpdate?: (data: T) => void
 ): Promise<T> {
-  const { data: cachedData, isStale } = getCached<T>(cacheKey);
-
-  // If we have cached data
+  const cachedData = getCached<T>(cacheKey);
   if (cachedData !== null) {
-    // If stale, refresh in background
-    if (isStale && markRefreshing(cacheKey)) {
-      // Background refresh - don't await
-      fetcher()
-        .then((freshData) => {
-          setCache(cacheKey, freshData);
-          onBackgroundUpdate?.(freshData);
-        })
-        .catch(() => {
-          // Silent fail for background refresh
-          const entry = cache.get(cacheKey);
-          if (entry) entry.isRefreshing = false;
-        });
-    }
-
-    // Return cached data immediately
     return cachedData;
   }
 
-  // No cache, fetch fresh
+  // No valid cache — fetch fresh
   const freshData = await fetcher();
   setCache(cacheKey, freshData);
   return freshData;
@@ -263,6 +220,7 @@ async function cachedFetch<T>(
 export async function getStudents(
   branch: string,
   month: number,
+  forceRefresh = false,
 ): Promise<Student[]> {
   if (isMockData()) {
     await new Promise((r) => setTimeout(r, 500));
@@ -292,6 +250,11 @@ export async function getStudents(
   }
 
   const cacheKey = `students:${branch}:${month}`;
+
+  // Force-invalidate on month switch to prevent stale data from wrong month
+  if (forceRefresh) {
+    invalidateCache(cacheKey);
+  }
 
   return cachedFetch(cacheKey, async () => {
     const response = await fetchWithRetry(`${SCRIPT_URL}?branch=${branch}&month=${month}`);
@@ -373,8 +336,9 @@ export async function markDiscontinued(
 export async function getDashboardStats(
   branch: string,
   month: number,
+  forceRefresh = false,
 ): Promise<DashboardStats> {
-  const students = await getStudents(branch, month);
+  const students = await getStudents(branch, month, forceRefresh);
   const active = students.filter((s) => s.status === "Active");
   const paid = active.filter((s) => s.paid);
 
@@ -766,6 +730,7 @@ export interface FinancialSummary {
 export async function getFinancialSummary(
   branch: string,
   month: number,
+  forceRefresh = false,
 ): Promise<FinancialSummary> {
   if (isMockData()) {
     await new Promise((r) => setTimeout(r, 300));
@@ -787,6 +752,10 @@ export async function getFinancialSummary(
   }
 
   const cacheKey = `financial:${branch}:${month}`;
+
+  if (forceRefresh) {
+    invalidateCache(cacheKey);
+  }
 
   return cachedFetch(cacheKey, async () => {
     const response = await fetchWithRetry(SCRIPT_URL, {

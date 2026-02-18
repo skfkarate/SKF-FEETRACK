@@ -353,28 +353,9 @@ export default function MonthlyFeeReceipt({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0,0,0,0.8)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 100,
-        padding: "16px",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "520px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
-      >
+    <div className="glass-modal-overlay" style={{ zIndex: 100 }}>
+      {/* Scrollable Container */}
+      <div className="w-full max-w-[520px] max-h-[90vh] overflow-y-auto px-4 custom-scrollbar">
         {/* Receipt Card (Preview) */}
         <div
           ref={receiptRef}
@@ -712,36 +693,16 @@ export default function MonthlyFeeReceipt({
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+        <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            style={{
-              flex: 1,
-              padding: "12px",
-              backgroundColor: "#333",
-              color: "white",
-              fontWeight: 600,
-              letterSpacing: "0.05em",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
+            className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider"
           >
             CLOSE
           </button>
           <button
             onClick={downloadReceipt}
-            style={{
-              flex: 1,
-              padding: "12px",
-              backgroundColor: "#16a34a",
-              color: "white",
-              fontWeight: 600,
-              letterSpacing: "0.05em",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
+            className="btn-primary flex-1 font-[family-name:var(--font-oswald)] tracking-wider flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 border-none text-white"
           >
             ⬇ DOWNLOAD
           </button>

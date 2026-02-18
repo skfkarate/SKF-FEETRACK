@@ -131,8 +131,10 @@ export default function MessagesPage() {
       router.push("/");
       return;
     }
-    setUser(storedUser);
-  }, [router]);
+    if (storedUser !== user) {
+      setUser(storedUser);
+    }
+  }, [router, user]);
 
   // Fetch students when branch/month changes
   useEffect(() => {
@@ -341,25 +343,25 @@ export default function MessagesPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen" style={{ background: "var(--bg-deep)" }}>
       {/* Header */}
-      <header className="bg-[#1a1a1a] border-b border-[#333] px-4 py-4 sticky top-0 z-50">
+      <header className="header-glass px-4 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="text-gray-500 hover:text-white transition-colors"
+              className="text-[var(--text-muted)] hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <h1 className="font-[family-name:var(--font-oswald)] text-xl font-bold tracking-wider flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-cyan-500" />
+              <MessageSquare className="w-5 h-5 text-cyan-400" />
               MESSAGE CENTER
             </h1>
           </div>
           <button
             onClick={() => setShowHelpModal(true)}
-            className="text-gray-400 hover:text-cyan-400 transition-colors p-2"
+            className="text-[var(--text-muted)] hover:text-cyan-400 transition-colors p-2"
             title="Placeholder Guide"
           >
             <HelpCircle className="w-5 h-5" />
@@ -369,9 +371,9 @@ export default function MessagesPage() {
 
       <main className="max-w-2xl mx-auto p-4 space-y-6">
         {/* Message Template Section */}
-        <section className="bg-[#1a1a1a] border border-[#333] p-4 rounded-lg">
+        <section className="glass-card p-4 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-gray-200">
+            <h2 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white">
               📝 COMPOSE MESSAGE
             </h2>
             <button
@@ -387,21 +389,20 @@ export default function MessagesPage() {
             id="message-template"
             value={messageTemplate}
             onChange={(e) => setMessageTemplate(e.target.value)}
-            className="w-full h-48 bg-[#0a0a0a] border border-[#444] rounded-lg p-3 text-gray-200 
-                       focus:border-cyan-500 focus:outline-none resize-none font-mono text-sm"
+            className="input-field h-48 resize-none font-mono text-sm"
             placeholder="Type your message here. Use placeholders like {student_name} to personalize..."
           />
 
           {/* Quick Insert Buttons */}
           <div className="mt-3">
-            <p className="text-xs text-gray-500 mb-2">Quick Insert:</p>
+            <p className="text-xs text-[var(--text-muted)] mb-2">Quick Insert:</p>
             <div className="flex flex-wrap gap-2">
               {PLACEHOLDERS.map((p) => (
                 <button
                   key={p.key}
                   onClick={() => insertPlaceholder(p.key)}
-                  className="px-2 py-1 bg-[#2a2a2a] border border-[#444] rounded text-xs text-cyan-400 
-                             hover:bg-[#333] hover:border-cyan-500 transition-colors"
+                  className="px-2 py-1 bg-white/5 border border-white/10 rounded text-xs text-cyan-400 
+                             hover:bg-white/10 hover:border-cyan-500/50 transition-colors"
                 >
                   {p.label}
                 </button>
@@ -411,37 +412,35 @@ export default function MessagesPage() {
         </section>
 
         {/* Select Recipients Section */}
-        <section className="bg-[#1a1a1a] border border-[#333] p-4 rounded-lg">
-          <h2 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-gray-200 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-cyan-500" />
+        <section className="glass-card p-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
+          <h2 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-white mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-cyan-400" />
             SELECT RECIPIENTS
           </h2>
 
           {/* Branch & Month Selection */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">
+              <label className="text-xs text-[var(--text-muted)] uppercase tracking-wider block mb-1 font-medium">
                 Branch
               </label>
               <select
                 value={selectedBranch}
                 onChange={(e) => setSelectedBranch(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#444] rounded px-3 py-2 text-gray-200 
-                           focus:border-cyan-500 focus:outline-none"
+                className="input-field"
               >
                 <option value="Herohalli">Herohalli</option>
                 <option value="MPSC">MP Sports Club</option>
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">
+              <label className="text-xs text-[var(--text-muted)] uppercase tracking-wider block mb-1 font-medium">
                 Month
               </label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="w-full bg-[#0a0a0a] border border-[#444] rounded px-3 py-2 text-gray-200 
-                           focus:border-cyan-500 focus:outline-none"
+                className="input-field"
               >
                 {MONTHS_SHORT.map((m, i) => (
                   <option key={m} value={i}>
@@ -455,14 +454,13 @@ export default function MessagesPage() {
           {/* Select All Toggle */}
           <button
             onClick={handleSelectAllToggle}
-            className={`w-full mb-4 p-3 border rounded-lg flex items-center justify-between transition-colors
-                       ${
-                         selectAllPending
-                           ? "bg-cyan-900/30 border-cyan-600 text-cyan-400"
-                           : "bg-[#0a0a0a] border-[#444] text-gray-400 hover:border-cyan-600"
-                       }`}
+            className={`w-full mb-4 p-3 border rounded-lg flex items-center justify-between transition-all duration-200
+                       ${selectAllPending
+                ? "bg-cyan-500/10 border-cyan-500/50 text-cyan-400"
+                : "bg-white/5 border-white/10 text-[var(--text-muted)] hover:border-cyan-500/30"
+              }`}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-sm font-medium">
               {selectAllPending ? (
                 <CheckSquare className="w-5 h-5" />
               ) : (
@@ -470,47 +468,47 @@ export default function MessagesPage() {
               )}
               All Pending Students
             </span>
-            <span className="text-sm">({pendingStudents.length} students)</span>
+            <span className="text-sm opacity-70">({pendingStudents.length} students)</span>
           </button>
 
           {/* Student List */}
           {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              Loading students...
+            <div className="text-center py-8">
+              <div className="spinner mx-auto mb-2" />
+              <p className="text-[var(--text-muted)] text-sm">Loading students...</p>
             </div>
           ) : pendingStudents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-[var(--text-muted)] text-sm">
               No pending students for this month! 🎉
             </div>
           ) : (
-            <div className="max-h-60 overflow-y-auto space-y-2 border border-[#333] rounded-lg p-2">
+            <div className="max-h-60 overflow-y-auto space-y-2 border border-[var(--border)] rounded-lg p-2 bg-[#000000]/20">
               {pendingStudents.map((student) => (
                 <button
                   key={student.id}
                   onClick={() => toggleStudent(student.id)}
-                  className={`w-full p-3 rounded-lg flex items-center justify-between transition-colors text-left
-                             ${
-                               selectedStudents.has(student.id)
-                                 ? "bg-cyan-900/20 border border-cyan-700"
-                                 : "bg-[#0a0a0a] border border-[#333] hover:border-[#555]"
-                             }`}
+                  className={`w-full p-3 rounded-lg flex items-center justify-between transition-all duration-200 text-left
+                             ${selectedStudents.has(student.id)
+                      ? "bg-cyan-500/10 border border-cyan-500/30"
+                      : "bg-transparent border border-transparent hover:bg-white/5"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedStudents.has(student.id) ? (
-                      <CheckSquare className="w-5 h-5 text-cyan-400" />
+                      <CheckSquare className="w-5 h-5 text-cyan-400 shrink-0" />
                     ) : (
-                      <Square className="w-5 h-5 text-gray-600" />
+                      <Square className="w-5 h-5 text-[var(--text-muted)] shrink-0" />
                     )}
                     <div>
-                      <p className="text-gray-200 font-medium">
+                      <p className="text-white font-medium text-sm">
                         {student.name}
                       </p>
-                      <p className="text-xs text-gray-500">{student.id}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{student.id}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-cyan-400 font-mono">₹{student.fee}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-cyan-400 font-mono text-sm">₹{student.fee}</p>
+                    <p className="text-xs text-[var(--text-muted)]">
                       {student.whatsapp || student.phone || "No phone"}
                     </p>
                   </div>
@@ -520,15 +518,15 @@ export default function MessagesPage() {
           )}
 
           {/* Selection Summary */}
-          <div className="mt-4 p-3 bg-[#0a0a0a] rounded-lg border border-[#333]">
+          <div className="mt-4 p-3 bg-white/5 rounded-lg border border-[var(--border)]">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Selected Students:</span>
+              <span className="text-[var(--text-muted)]">Selected Students:</span>
               <span className="text-cyan-400 font-bold">
                 {selectedStudentsList.length}
               </span>
             </div>
             <div className="flex justify-between text-sm mt-1">
-              <span className="text-gray-400">Total Pending:</span>
+              <span className="text-[var(--text-muted)]">Total Pending:</span>
               <span className="text-cyan-400 font-mono font-bold">
                 ₹{totalPendingAmount.toLocaleString()}
               </span>
@@ -537,14 +535,14 @@ export default function MessagesPage() {
         </section>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "200ms" }}>
           <button
             onClick={handlePreview}
             disabled={selectedStudentsList.length === 0}
-            className="p-4 bg-[#1a1a1a] border border-[#444] rounded-lg text-gray-200 
-                       hover:border-cyan-500 hover:text-cyan-400 transition-colors
+            className="p-4 rounded-lg text-gray-200 font-medium tracking-wide
+                       border border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-400 transition-all duration-200
                        disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center justify-center gap-2"
+                       flex items-center justify-center gap-2 text-sm"
           >
             <Eye className="w-5 h-5" />
             Preview Message
@@ -552,10 +550,10 @@ export default function MessagesPage() {
           <button
             onClick={handleSendAll}
             disabled={selectedStudentsList.length === 0 || sending}
-            className="p-4 bg-gradient-to-r from-cyan-600 to-cyan-700 border border-cyan-500 rounded-lg 
-                       text-white font-bold hover:from-cyan-500 hover:to-cyan-600 transition-all
+            className="p-4 bg-gradient-to-r from-cyan-600 to-cyan-700 border border-cyan-500/50 rounded-lg 
+                       text-white font-bold hover:from-cyan-500 hover:to-cyan-600 transition-all duration-200
                        disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center justify-center gap-2"
+                       flex items-center justify-center gap-2 text-sm shadow-lg shadow-cyan-900/20"
           >
             <Send className="w-5 h-5" />
             {sending
@@ -565,28 +563,28 @@ export default function MessagesPage() {
         </div>
 
         {/* Note about WhatsApp Business */}
-        <p className="text-center text-xs text-gray-600">
+        <p className="text-center text-xs text-[var(--text-muted)] opacity-70">
           Messages will open in WhatsApp Business app on your device
         </p>
       </main>
 
       {/* Help Modal */}
       {showHelpModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-4 border-b border-[#333] flex items-center justify-between sticky top-0 bg-[#1a1a1a]">
+        <div className="glass-modal-overlay">
+          <div className="glass-modal !max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between sticky top-0 bg-[#0F0F0F] z-10 backdrop-blur-xl">
               <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-cyan-400">
                 PLACEHOLDER GUIDE
               </h3>
               <button
                 onClick={() => setShowHelpModal(false)}
-                className="text-gray-500 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4 space-y-4">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-[var(--text-secondary)]">
                 Use these placeholders in your message. They will be
                 automatically replaced with actual student data when sending.
               </p>
@@ -594,25 +592,25 @@ export default function MessagesPage() {
               {PLACEHOLDERS.map((p) => (
                 <div
                   key={p.key}
-                  className="bg-[#0a0a0a] p-3 rounded-lg border border-[#333]"
+                  className="bg-white/5 p-3 rounded-lg border border-white/10"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <code className="text-cyan-400 text-sm font-mono">
+                    <code className="text-cyan-400 text-sm font-mono bg-cyan-900/20 px-1 rounded">
                       {p.key}
                     </code>
-                    <span className="text-xs text-gray-500">{p.label}</span>
+                    <span className="text-xs text-[var(--text-muted)]">{p.label}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mb-1">{p.description}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[var(--text-secondary)] mb-1">{p.description}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
                     Example: <span className="text-green-400">{p.example}</span>
                   </p>
                 </div>
               ))}
 
-              <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-600/50 rounded-lg">
+              <div className="mt-4 p-3 bg-amber-900/20 border border-amber-600/30 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-yellow-400">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-200/80">
                     Make sure placeholders are typed exactly as shown, including
                     the curly braces. The preview will show you how the message
                     will look before sending.
@@ -626,21 +624,21 @@ export default function MessagesPage() {
 
       {/* Preview Modal */}
       {showPreviewModal && previewStudent && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] rounded-lg max-w-md w-full">
-            <div className="p-4 border-b border-[#333] flex items-center justify-between">
+        <div className="glass-modal-overlay">
+          <div className="glass-modal !max-w-md">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
               <h3 className="font-[family-name:var(--font-oswald)] text-lg tracking-wider text-cyan-400">
                 MESSAGE PREVIEW
               </h3>
               <button
                 onClick={() => setShowPreviewModal(false)}
-                className="text-gray-500 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4">
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-[var(--text-muted)] mb-2">
                 Preview for:{" "}
                 <span className="text-cyan-400">{previewStudent.name}</span>
               </p>
@@ -649,26 +647,26 @@ export default function MessagesPage() {
               {hasUnresolvedPlaceholders(
                 replacePlaceholders(messageTemplate, previewStudent),
               ) && (
-                <div className="mb-3 p-3 bg-red-900/20 border border-red-600/50 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-red-400">
-                      Warning: Your message contains unrecognized placeholders
-                      that won&apos;t be replaced. Please check your template.
-                    </p>
+                  <div className="mb-3 p-3 bg-red-900/20 border border-red-600/30 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-red-200/80">
+                        Warning: Your message contains unrecognized placeholders
+                        that won&apos;t be replaced. Please check your template.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="bg-[#0a0a0a] p-4 rounded-lg border border-[#333] whitespace-pre-wrap text-gray-200 text-sm">
+              <div className="bg-white/5 p-4 rounded-lg border border-white/10 whitespace-pre-wrap text-[var(--text-secondary)] text-sm font-mono">
                 {replacePlaceholders(messageTemplate, previewStudent)}
               </div>
 
               <div className="mt-4 flex gap-3">
                 <button
                   onClick={() => setShowPreviewModal(false)}
-                  className="flex-1 p-3 bg-[#2a2a2a] border border-[#444] rounded-lg text-gray-300 
-                             hover:border-gray-500 transition-colors"
+                  className="flex-1 p-3 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] 
+                             hover:bg-white/5 transition-all text-sm"
                 >
                   Edit Template
                 </button>
@@ -677,9 +675,9 @@ export default function MessagesPage() {
                     setShowPreviewModal(false);
                     handleSendAll();
                   }}
-                  className="flex-1 p-3 bg-gradient-to-r from-cyan-600 to-cyan-700 border border-cyan-500 
+                  className="flex-1 p-3 bg-gradient-to-r from-cyan-600 to-cyan-700 border border-cyan-500/50 
                              rounded-lg text-white font-bold hover:from-cyan-500 hover:to-cyan-600 transition-all
-                             flex items-center justify-center gap-2"
+                             flex items-center justify-center gap-2 text-sm shadow-lg shadow-cyan-900/20"
                 >
                   <Send className="w-4 h-4" />
                   Send All

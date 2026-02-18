@@ -231,21 +231,21 @@ export default function DevelopmentFundPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen" style={{ background: "var(--bg-deep)" }}>
       {/* Header */}
-      <header className="bg-[#1a1a1a] border-b border-[#333] px-4 py-4 sticky top-0 z-50">
+      <header className="header-glass px-4 py-4">
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <Link
             href="/dashboard"
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-[var(--text-muted)] hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1">
             <h1 className="font-[family-name:var(--font-oswald)] text-lg font-bold tracking-wider">
               DEVELOPMENT FUND
             </h1>
-            <p className="text-gray-500 text-sm">All Branches • 30% Allocation</p>
+            <p className="text-[var(--text-muted)] text-xs tracking-wider">All Branches • 30% Allocation</p>
           </div>
         </div>
       </header>
@@ -253,7 +253,7 @@ export default function DevelopmentFundPage() {
       <main className="max-w-2xl mx-auto p-4">
         {/* Filter */}
         <div className="mb-6">
-          <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
+          <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
             Expense Filter
           </label>
           <select
@@ -263,7 +263,7 @@ export default function DevelopmentFundPage() {
                 e.target.value === "all" ? "all" : parseInt(e.target.value)
               )
             }
-            className="w-full bg-[#1a1a1a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none font-[family-name:var(--font-oswald)] tracking-wider"
+            className="input-field font-[family-name:var(--font-oswald)] tracking-wider"
           >
             <option value="all">ALL TIME (OVERALL)</option>
             {MONTHS.map((m, i) => (
@@ -276,20 +276,17 @@ export default function DevelopmentFundPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-500">Loading development fund...</p>
+          <div className="text-center py-16">
+            <div className="spinner mx-auto mb-4" />
+            <p className="text-[var(--text-muted)] text-sm">Loading development fund...</p>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="text-center py-12">
-            <p className="text-red-500 mb-4">{error}</p>
-            <button
-              onClick={loadData}
-              className="px-4 py-2 bg-red-600 text-white hover:bg-red-700"
-            >
+          <div className="text-center py-16">
+            <p className="text-red-400 mb-4 text-sm">{error}</p>
+            <button onClick={loadData} className="btn-primary text-sm">
               Retry
             </button>
           </div>
@@ -299,26 +296,26 @@ export default function DevelopmentFundPage() {
         {!loading && !error && data && (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-[#1a1a1a] border border-blue-600/50 p-4">
-                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1 flex items-center gap-2">
-                  <PiggyBank className="w-4 h-4" /> 30% Fund
+            <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-in">
+              <div className="glass-card p-4" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <PiggyBank className="w-3 h-3" /> 30% Fund
                 </p>
                 <p className="font-[family-name:var(--font-oswald)] text-xl text-blue-400">
                   ₹{filteredStats.allocated.toLocaleString()}
                 </p>
               </div>
-              <div className="bg-[#1a1a1a] border border-orange-600/50 p-4">
-                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1 flex items-center gap-2">
-                  <Package className="w-4 h-4" /> Spent
+              <div className="glass-card p-4" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <Package className="w-3 h-3" /> Spent
                 </p>
-                <p className="font-[family-name:var(--font-oswald)] text-xl text-orange-400">
+                <p className="font-[family-name:var(--font-oswald)] text-xl text-amber-400">
                   ₹{filteredStats.spent.toLocaleString()}
                 </p>
               </div>
-              <div className="bg-[#1a1a1a] border border-green-600/50 p-4">
-                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" /> Balance
+              <div className="glass-card p-4" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> Balance
                 </p>
                 <p className="font-[family-name:var(--font-oswald)] text-xl text-green-400">
                   ₹{filteredStats.balance.toLocaleString()}
@@ -328,17 +325,15 @@ export default function DevelopmentFundPage() {
 
             {/* Monthly Breakdown - ONLY show if filter is ALL */}
             {filter === "all" && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-gray-500 text-sm uppercase tracking-wider">
-                    Monthly Breakdown
-                  </p>
-                </div>
-                <div className="bg-[#1a1a1a] border border-[#333] overflow-hidden">
+              <div className="mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-3">
+                  Monthly Breakdown
+                </p>
+                <div className="glass-card overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-[#333] text-gray-500 text-xs uppercase tracking-wider">
+                        <tr className="border-b border-[var(--border)] text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
                           <th className="text-left p-3">Month</th>
                           <th className="text-right p-3">Collected</th>
                           <th className="text-right p-3">30% Fund</th>
@@ -352,18 +347,18 @@ export default function DevelopmentFundPage() {
                           .map((m) => (
                             <tr
                               key={m.month}
-                              className="border-b border-[#333]/50 hover:bg-[#252525]"
+                              className="border-b border-[var(--border)]/50 hover:bg-white/[0.02] transition-colors"
                             >
-                              <td className="p-3 font-[family-name:var(--font-oswald)] tracking-wider">
+                              <td className="p-3 font-[family-name:var(--font-oswald)] tracking-wider text-sm">
                                 {MONTHS[m.month]}
                               </td>
-                              <td className="p-3 text-right text-gray-400">
+                              <td className="p-3 text-right text-[var(--text-secondary)]">
                                 ₹{m.collected.toLocaleString()}
                               </td>
                               <td className="p-3 text-right text-blue-400">
                                 ₹{m.devFund.toLocaleString()}
                               </td>
-                              <td className="p-3 text-right text-orange-400">
+                              <td className="p-3 text-right text-amber-400">
                                 {m.spent > 0
                                   ? `₹${m.spent.toLocaleString()}`
                                   : "-"}
@@ -379,7 +374,7 @@ export default function DevelopmentFundPage() {
                             <tr>
                               <td
                                 colSpan={5}
-                                className="p-6 text-center text-gray-500"
+                                className="p-6 text-center text-[var(--text-muted)]"
                               >
                                 No fee payments or expenses recorded yet
                               </td>
@@ -393,22 +388,22 @@ export default function DevelopmentFundPage() {
             )}
 
             {/* Expenses Section */}
-            <div>
+            <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-gray-500 text-sm uppercase tracking-wider">
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
                   Expenses{" "}
                   {filter !== "all" ? `(${MONTHS[filter]})` : "(All Time)"}
                 </p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="px-4 py-2 text-sm border border-green-600 text-green-500 hover:bg-green-600 hover:text-white transition-all"
+                  className="px-4 py-2 text-sm rounded-lg border border-green-600/50 text-green-400 hover:bg-green-600 hover:text-white transition-all duration-200 font-medium tracking-wide"
                 >
                   + Add Expense
                 </button>
               </div>
               <div className="space-y-2">
                 {filteredExpenses.length === 0 ? (
-                  <div className="bg-[#1a1a1a] border border-[#333] p-6 text-center text-gray-500">
+                  <div className="glass-card p-6 text-center text-[var(--text-muted)] text-sm">
                     No expenses recorded for this period
                   </div>
                 ) : (
@@ -418,26 +413,26 @@ export default function DevelopmentFundPage() {
                       <div
                         key={expense.id}
                         onClick={() => setSelectedExpense(expense)}
-                        className="bg-[#1a1a1a] border border-[#333] p-4 cursor-pointer hover:border-red-600/50 transition-colors"
+                        className="glass-card p-4 cursor-pointer hover:border-red-600/30 transition-all duration-200"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="font-[family-name:var(--font-oswald)] tracking-wide truncate">
+                              <p className="font-[family-name:var(--font-oswald)] tracking-wide truncate text-sm">
                                 {expense.title || expense.description}
                               </p>
                               <span
-                                className={`text-xs px-2 py-0.5 border rounded ${getScopeBadgeColor(expense.scope || "Both")}`}
+                                className={`text-[10px] px-2 py-0.5 border rounded-full ${getScopeBadgeColor(expense.scope || "Both")}`}
                               >
                                 {getScopeLabel(expense.scope || "Both")}
                               </span>
                             </div>
-                            <p className="text-gray-600 text-sm">
+                            <p className="text-[var(--text-muted)] text-xs">
                               {MONTHS[expense.month]} {expense.year} •{" "}
                               {expense.dateAdded}
                             </p>
                           </div>
-                          <p className="font-[family-name:var(--font-oswald)] text-lg text-orange-400 ml-4">
+                          <p className="font-[family-name:var(--font-oswald)] text-lg text-amber-400 ml-4">
                             -₹{expense.amount.toLocaleString()}
                           </p>
                         </div>
@@ -452,153 +447,155 @@ export default function DevelopmentFundPage() {
 
       {/* Add Expense Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
-                ADD EXPENSE
-              </h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                  Scope *
-                </label>
-                <select
-                  value={newExpense.scope}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      scope: e.target.value,
-                    })
-                  }
-                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+        <div className="glass-modal-overlay">
+          <div className="glass-modal !max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                  ADD EXPENSE
+                </h2>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="text-[var(--text-muted)] hover:text-white transition-colors"
                 >
-                  {SCOPE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {newExpense.scope === "Others" && (
+              <div className="space-y-4">
                 <div>
-                  <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                    Specify Scope *
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Scope *
                   </label>
-                  <input
-                    type="text"
-                    value={newExpense.scopeOther}
+                  <select
+                    value={newExpense.scope}
                     onChange={(e) =>
                       setNewExpense({
                         ...newExpense,
-                        scopeOther: e.target.value,
+                        scope: e.target.value,
                       })
                     }
-                    placeholder="e.g., Tournament, Training Camp..."
-                    className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+                    className="input-field"
+                  >
+                    {SCOPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {newExpense.scope === "Others" && (
+                  <div>
+                    <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                      Specify Scope *
+                    </label>
+                    <input
+                      type="text"
+                      value={newExpense.scopeOther}
+                      onChange={(e) =>
+                        setNewExpense({
+                          ...newExpense,
+                          scopeOther: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Tournament, Training Camp..."
+                      className="input-field"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Month *
+                  </label>
+                  <select
+                    value={newExpense.month}
+                    onChange={(e) =>
+                      setNewExpense({
+                        ...newExpense,
+                        month: parseInt(e.target.value),
+                      })
+                    }
+                    className="input-field"
+                  >
+                    {MONTHS.map((m, i) => (
+                      <option key={i} value={i}>
+                        {m} 2026
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={newExpense.title}
+                    onChange={(e) =>
+                      setNewExpense({
+                        ...newExpense,
+                        title: e.target.value,
+                      })
+                    }
+                    placeholder="e.g., Karate Equipment, Practice Mats..."
+                    className="input-field"
                   />
                 </div>
-              )}
 
-              <div>
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                  Month *
-                </label>
-                <select
-                  value={newExpense.month}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      month: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Description *
+                  </label>
+                  <textarea
+                    value={newExpense.description}
+                    onChange={(e) =>
+                      setNewExpense({
+                        ...newExpense,
+                        description: e.target.value,
+                      })
+                    }
+                    placeholder="Provide detailed description of the expense..."
+                    rows={3}
+                    className="input-field resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+                    Amount (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    value={newExpense.amount || ""}
+                    onChange={(e) =>
+                      setNewExpense({
+                        ...newExpense,
+                        amount: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="Enter amount"
+                    className="input-field"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm"
                 >
-                  {MONTHS.map((m, i) => (
-                    <option key={i} value={i}>
-                      {m} 2026
-                    </option>
-                  ))}
-                </select>
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleAddExpenseClick}
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors"
+                >
+                  REVIEW & SAVE
+                </button>
               </div>
-
-              <div>
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={newExpense.title}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      title: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., Karate Equipment, Practice Mats..."
-                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                  Description *
-                </label>
-                <textarea
-                  value={newExpense.description}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Provide detailed description of the expense..."
-                  rows={3}
-                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-2">
-                  Amount (₹) *
-                </label>
-                <input
-                  type="number"
-                  value={newExpense.amount || ""}
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      amount: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="Enter amount"
-                  className="w-full bg-[#0a0a0a] border border-[#333] px-4 py-3 text-white focus:border-red-600 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 py-3 bg-[#333] text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-[#444]"
-              >
-                CANCEL
-              </button>
-              <button
-                onClick={handleAddExpenseClick}
-                className="flex-1 py-3 bg-green-600 text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-green-700"
-              >
-                REVIEW & SAVE
-              </button>
             </div>
           </div>
         </div>
@@ -606,69 +603,71 @@ export default function DevelopmentFundPage() {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-4">
-          <div className="bg-[#1a1a1a] border border-yellow-600/50 w-full max-w-md p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <AlertTriangle className="w-6 h-6 text-yellow-500" />
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
-                CONFIRM EXPENSE
-              </h2>
-            </div>
+        <div className="glass-modal-overlay" style={{ zIndex: 110 }}>
+          <div className="glass-modal !max-w-md" style={{ borderColor: "rgba(245, 158, 11, 0.3)" }}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                  CONFIRM EXPENSE
+                </h2>
+              </div>
 
-            <p className="text-gray-400 mb-4">
-              Please review the expense details before saving:
-            </p>
+              <p className="text-[var(--text-secondary)] mb-4 text-sm">
+                Please review the expense details before saving:
+              </p>
 
-            <div className="bg-[#0a0a0a] border border-[#333] p-4 space-y-3 mb-6">
-              <div>
-                <p className="text-gray-500 text-xs uppercase">Scope</p>
-                <p className="text-white">
-                  {newExpense.scope === "Others"
-                    ? newExpense.scopeOther
-                    : getScopeLabel(newExpense.scope)}
-                </p>
+              <div className="glass-surface p-4 space-y-3 mb-6 rounded-lg">
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase">Scope</p>
+                  <p className="text-white text-sm">
+                    {newExpense.scope === "Others"
+                      ? newExpense.scopeOther
+                      : getScopeLabel(newExpense.scope)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase">Month</p>
+                  <p className="text-white text-sm">{MONTHS[newExpense.month]} 2026</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase">Title</p>
+                  <p className="text-white text-sm">{newExpense.title}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase">Description</p>
+                  <p className="text-white text-sm">{newExpense.description}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase">Amount</p>
+                  <p className="text-amber-400 font-[family-name:var(--font-oswald)] text-xl">
+                    ₹{newExpense.amount.toLocaleString()}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase">Month</p>
-                <p className="text-white">{MONTHS[newExpense.month]} 2026</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase">Title</p>
-                <p className="text-white">{newExpense.title}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase">Description</p>
-                <p className="text-white text-sm">{newExpense.description}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs uppercase">Amount</p>
-                <p className="text-orange-400 font-[family-name:var(--font-oswald)] text-xl">
-                  ₹{newExpense.amount.toLocaleString()}
-                </p>
-              </div>
-            </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                disabled={adding}
-                className="flex-1 py-3 bg-[#333] text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-[#444] disabled:opacity-50"
-              >
-                GO BACK
-              </button>
-              <button
-                onClick={handleConfirmSave}
-                disabled={adding}
-                className="flex-1 py-3 bg-green-600 text-white font-[family-name:var(--font-oswald)] tracking-wider hover:bg-green-700 disabled:opacity-50"
-              >
-                {adding ? (
-                  "SAVING..."
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <Save className="w-4 h-4" /> CONFIRM
-                  </span>
-                )}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={adding}
+                  className="btn-ghost flex-1 font-[family-name:var(--font-oswald)] tracking-wider text-sm disabled:opacity-50"
+                >
+                  GO BACK
+                </button>
+                <button
+                  onClick={handleConfirmSave}
+                  disabled={adding}
+                  className="flex-1 py-3 bg-green-600 text-white rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
+                >
+                  {adding ? (
+                    "SAVING..."
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Save className="w-4 h-4" /> CONFIRM
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -676,90 +675,92 @@ export default function DevelopmentFundPage() {
 
       {/* Expense Detail Modal */}
       {selectedExpense && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-          <div className="bg-[#1a1a1a] border border-[#333] w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
-                EXPENSE DETAILS
-              </h2>
-              <button
-                onClick={() => setSelectedExpense(null)}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs px-2 py-1 border rounded ${getScopeBadgeColor(selectedExpense.scope || "Both")}`}
-                >
-                  {getScopeLabel(selectedExpense.scope || "Both")}
-                </span>
-                <span className="text-gray-500 text-sm">
-                  {MONTHS[selectedExpense.month]} {selectedExpense.year}
-                </span>
-              </div>
-
-              <div>
-                <p className="text-gray-500 text-xs uppercase mb-1">Title</p>
-                <p className="font-[family-name:var(--font-oswald)] text-lg tracking-wide">
-                  {selectedExpense.title || selectedExpense.description}
-                </p>
-              </div>
-
-              {selectedExpense.description &&
-                selectedExpense.title !== selectedExpense.description && (
-                  <div>
-                    <p className="text-gray-500 text-xs uppercase mb-1">
-                      Description
-                    </p>
-                    <p className="text-gray-300">{selectedExpense.description}</p>
-                  </div>
-                )}
-
-              <div>
-                <p className="text-gray-500 text-xs uppercase mb-1">Amount</p>
-                <p className="font-[family-name:var(--font-oswald)] text-2xl text-orange-400">
-                  ₹{selectedExpense.amount.toLocaleString()}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-500 text-xs uppercase mb-1">
-                  Date Added
-                </p>
-                <p className="text-gray-300">{selectedExpense.dateAdded}</p>
-              </div>
-
-              <div className="text-gray-600 text-xs">
-                ID: {selectedExpense.id}
-              </div>
-            </div>
-
-            {/* Delete Section */}
-            <div className="border-t border-[#333] pt-4">
-              {canDeleteExpense(selectedExpense) ? (
+        <div className="glass-modal-overlay">
+          <div className="glass-modal !max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-[family-name:var(--font-oswald)] text-xl tracking-wider">
+                  EXPENSE DETAILS
+                </h2>
                 <button
-                  onClick={handleDeleteExpense}
-                  disabled={deleting}
-                  className="w-full py-3 bg-red-600/20 border border-red-600 text-red-500 font-[family-name:var(--font-oswald)] tracking-wider hover:bg-red-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  onClick={() => setSelectedExpense(null)}
+                  className="text-[var(--text-muted)] hover:text-white transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  {deleting ? "DELETING..." : "DELETE EXPENSE"}
+                  <X className="w-5 h-5" />
                 </button>
-              ) : (
-                <div className="text-center">
-                  <p className="text-gray-500 text-sm mb-2">
-                    ⚠️ Delete not available
-                  </p>
-                  <p className="text-gray-600 text-xs">
-                    Expenses can only be deleted within 24 hours of creation to
-                    prevent corruption.
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-[10px] px-2 py-1 border rounded-full ${getScopeBadgeColor(selectedExpense.scope || "Both")}`}
+                  >
+                    {getScopeLabel(selectedExpense.scope || "Both")}
+                  </span>
+                  <span className="text-[var(--text-muted)] text-sm">
+                    {MONTHS[selectedExpense.month]} {selectedExpense.year}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase mb-1">Title</p>
+                  <p className="font-[family-name:var(--font-oswald)] text-lg tracking-wide">
+                    {selectedExpense.title || selectedExpense.description}
                   </p>
                 </div>
-              )}
+
+                {selectedExpense.description &&
+                  selectedExpense.title !== selectedExpense.description && (
+                    <div>
+                      <p className="text-[var(--text-muted)] text-[10px] uppercase mb-1">
+                        Description
+                      </p>
+                      <p className="text-[var(--text-secondary)] text-sm">{selectedExpense.description}</p>
+                    </div>
+                  )}
+
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase mb-1">Amount</p>
+                  <p className="font-[family-name:var(--font-oswald)] text-2xl text-amber-400">
+                    ₹{selectedExpense.amount.toLocaleString()}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[var(--text-muted)] text-[10px] uppercase mb-1">
+                    Date Added
+                  </p>
+                  <p className="text-[var(--text-secondary)] text-sm">{selectedExpense.dateAdded}</p>
+                </div>
+
+                <div className="text-[var(--text-muted)] text-xs font-mono">
+                  ID: {selectedExpense.id}
+                </div>
+              </div>
+
+              {/* Delete Section */}
+              <div className="border-t border-[var(--border)] pt-4">
+                {canDeleteExpense(selectedExpense) ? (
+                  <button
+                    onClick={handleDeleteExpense}
+                    disabled={deleting}
+                    className="w-full py-3 bg-red-600/20 border border-red-600/50 text-red-400 rounded-lg font-[family-name:var(--font-oswald)] tracking-wider text-sm hover:bg-red-600 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {deleting ? "DELETING..." : "DELETE EXPENSE"}
+                  </button>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-[var(--text-muted)] text-sm mb-2">
+                      ⚠️ Delete not available
+                    </p>
+                    <p className="text-[var(--text-muted)] text-xs">
+                      Expenses can only be deleted within 24 hours of creation to
+                      prevent corruption.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

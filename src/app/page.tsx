@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-// Valid credentials (same as original)
 const VALID_USERS = ["krish", "usha"];
 
 export default function LoginPage() {
@@ -18,68 +17,97 @@ export default function LoginPage() {
     setError("");
 
     setTimeout(() => {
-      if (VALID_USERS.includes(password.toLowerCase().trim())) {
-        localStorage.setItem("skf_user", password.toLowerCase());
+      const lowerPass = password.trim().toLowerCase();
+      if (VALID_USERS.includes(lowerPass)) {
+        localStorage.setItem("skf_user", lowerPass);
         localStorage.setItem("skf_login_time", Date.now().toString());
         router.push("/dashboard");
       } else {
-        setError("Access Denied");
+        setError("Invalid access code");
         setLoading(false);
       }
-    }, 500);
+    }, 600);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4">
-      <div className="w-full max-w-md text-center">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.08) 0%, var(--bg-deep) 60%)" }}>
+
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+
+      <div className="glass-card p-8 w-full max-w-sm animate-scale-in relative">
         {/* Logo */}
-        <div className="relative w-32 h-32 mx-auto mb-6">
-          <Image
-            src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
-            alt="SKF Karate Logo"
-            fill
-            className="object-contain"
-          />
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-red-600/20 to-transparent blur-lg" />
+            <Image
+              src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
+              alt="SKF Logo"
+              width={80}
+              height={80}
+              className="relative rounded-full object-contain border border-white/10 bg-white/5"
+            />
+          </div>
         </div>
-        <h1 className="font-[family-name:var(--font-oswald)] text-5xl font-bold tracking-widest mb-2">
-          SKF <span className="text-red-600">KARATE</span>
-        </h1>
-        <p className="text-gray-600 text-sm tracking-[0.3em] uppercase mb-12">
-          Fee Management
-        </p>
 
-        {/* Login Input */}
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-          placeholder="Enter your identity"
-          className="w-full bg-[#141414] border-2 border-[#2a2a2a] px-6 py-4 text-lg text-center text-white 
-                     focus:border-red-600 focus:outline-none focus:shadow-[0_0_30px_rgba(220,38,38,0.3)] 
-                     transition-all duration-300 placeholder:text-gray-600 placeholder:italic"
-          autoFocus
-        />
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h1 className="font-[family-name:var(--font-oswald)] text-3xl font-bold tracking-[0.2em] gradient-text">
+            SKF KARATE
+          </h1>
+          <p className="text-[var(--text-muted)] text-xs tracking-[0.15em] mt-2 uppercase">
+            Fee Management System
+          </p>
+        </div>
 
-        {/* Error Message */}
-        {error && (
-          <p className="text-red-600 mt-4 font-medium animate-pulse">{error}</p>
-        )}
+        {/* Form */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
+              Access Code
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && !loading && handleLogin()}
+              placeholder="Enter your access code"
+              className="input-field font-[family-name:var(--font-oswald)] tracking-wider text-center text-lg"
+              autoFocus
+            />
+          </div>
 
-        {/* Login Button */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className="mt-6 px-10 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white 
-                     font-[family-name:var(--font-oswald)] text-lg font-semibold tracking-wider uppercase
-                     shadow-[0_4px_20px_rgba(220,38,38,0.4)] hover:shadow-[0_6px_25px_rgba(220,38,38,0.6)]
-                     hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-wait"
-        >
-          {loading ? "Verifying..." : "Enter"}
-        </button>
+          {error && (
+            <div className="animate-slide-down">
+              <p className="text-red-400 text-sm text-center py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                {error}
+              </p>
+            </div>
+          )}
 
-        <p className="text-gray-700 text-xs mt-8">
-          Only authorized senseis may enter
+          <button
+            onClick={handleLogin}
+            disabled={loading || !password.trim()}
+            className="btn-primary w-full font-[family-name:var(--font-oswald)] tracking-[0.15em] text-sm
+                       disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
+                       flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="spinner !w-4 !h-4 !border-white/30 !border-t-white" />
+                AUTHENTICATING...
+              </>
+            ) : (
+              "ENTER"
+            )}
+          </button>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-[var(--text-muted)] text-[10px] mt-6 tracking-wider uppercase">
+          Sports Karate-do Fitness & Self Defence ®
         </p>
       </div>
     </div>
