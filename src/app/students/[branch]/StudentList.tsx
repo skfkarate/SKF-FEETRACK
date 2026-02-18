@@ -1030,14 +1030,14 @@ export default function StudentList({ branch }: { branch: string }) {
               {/* Contact Actions */}
               <div className="flex gap-3 mb-6">
                 <a
-                  href={`tel:${detailStudent.phone}`}
+                  href={`tel:${detailStudent.phone || ''}`}
                   className="flex-1 py-3 bg-green-600/20 border border-green-600/50 text-green-400 rounded-lg flex items-center justify-center gap-2 hover:bg-green-600/30 transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Phone className="w-4 h-4" /> Call
                 </a>
                 <a
-                  href={`https://wa.me/${(detailStudent.whatsapp || detailStudent.phone).replace(/\D/g, "")}`}
+                  href={`https://wa.me/${(detailStudent.whatsapp || detailStudent.phone || '').replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 py-3 bg-[#25D366]/20 border border-[#25D366]/50 text-[#25D366] rounded-lg flex items-center justify-center gap-2 hover:bg-[#25D366]/30 transition-colors"
@@ -1054,15 +1054,15 @@ export default function StudentList({ branch }: { branch: string }) {
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-[var(--text-muted)] text-sm">DOB</span>
-                  <span className="text-white text-sm font-medium">{detailStudent.dateOfBirth ? new Date(detailStudent.dateOfBirth).toLocaleDateString() : "-"}</span>
+                  <span className="text-white text-sm font-medium">{detailStudent.dateOfBirth && detailStudent.dateOfBirth !== '' ? (() => { try { const d = new Date(detailStudent.dateOfBirth); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString(); } catch { return '-'; } })() : "-"}</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-[var(--text-muted)] text-sm">Join Month</span>
-                  <span className="text-white text-sm font-medium">{MONTHS[detailStudent.joinMonth]}</span>
+                  <span className="text-white text-sm font-medium">{MONTHS[detailStudent.joinMonth] ?? '-'}</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-[var(--text-muted)] text-sm">Monthly Fee</span>
-                  <span className="text-white text-sm font-medium">₹{detailStudent.fee}</span>
+                  <span className="text-white text-sm font-medium">₹{detailStudent.fee ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[var(--text-muted)] text-sm">Status</span>

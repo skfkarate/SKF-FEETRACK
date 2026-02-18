@@ -508,11 +508,9 @@ function getStudentsWithPaymentStatus(branch, month) {
       creditApplied: creditAmount, // Track credit
       phone: row[5] || "",
       whatsapp: row[6] || "",
-      dateOfBirth: row[7] || "",
+      dateOfBirth: row[7] instanceof Date ? row[7].toISOString().split('T')[0] : String(row[7] || ""),
       email: row[8] || "",
       paid: isPaid,
-      monthStatus: monthStatus,
-      joinMonth: joinMonth,
       monthStatus: monthStatus,
       joinMonth: joinMonth,
       // New fields
