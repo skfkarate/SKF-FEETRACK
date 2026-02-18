@@ -565,10 +565,12 @@ export default function StudentList({ branch }: { branch: string }) {
                         {student.monthStatus === "Paid" ? (
                           <button
                             onClick={() => setReceiptStudent(student)}
-                            className="w-9 h-9 rounded-full bg-green-500/15 border border-green-500/30 text-green-400 flex items-center justify-center hover:bg-green-500/25 transition-all"
+                            className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center hover:bg-green-400 transition-all shadow-md shadow-green-900/40"
                             title="View Receipt"
                           >
-                            <CheckCircle2 className="w-4 h-4" />
+                            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
                           </button>
                         ) : isInactive ? (
                           <div className="w-9 h-9 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-[var(--text-muted)]">

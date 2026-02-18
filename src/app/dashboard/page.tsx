@@ -33,10 +33,19 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.06) 0%, var(--bg-deep) 50%)" }}>
+    <div className="min-h-screen relative" style={{ background: "var(--bg-deep)" }}>
+      {/* Ambient background gradients - visible on mobile */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120vw] h-[50vh]"
+          style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.15) 0%, transparent 70%)" }}
+        />
+        <div className="absolute top-[30%] right-0 w-[60vw] h-[40vh]"
+          style={{ background: "radial-gradient(ellipse at 100% 50%, rgba(59,130,246,0.08) 0%, transparent 70%)" }}
+        />
+      </div>
       <Navbar isDashboard rightContent={<NavMenu />} />
 
-      <main className="max-w-2xl mx-auto p-4 pt-24 pb-20">
+      <main className="relative z-10 max-w-2xl mx-auto p-4 pt-24 pb-20">
         {/* Welcome Hero */}
         <div className="mb-8 animate-fade-in">
           <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.2em] mb-2 font-medium">

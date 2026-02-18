@@ -14,14 +14,7 @@
 // AUTO SETUP - Run this once!
 // ============================================
 function setupAllSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // Check if spreadsheet is available
-  if (!ss) {
-    throw new Error(
-      "No active spreadsheet found. Please make sure you're running this script from a Google Sheet (Extensions > Apps Script).",
-    );
-  }
+  const ss = getSpreadsheet();
 
   // Create DB sheets with comprehensive student information
   createSheetIfNotExists(ss, "DB_Herohalli", [
@@ -198,6 +191,21 @@ const CONFIG = {
 };
 
 /**
+ * Helper: Get the active spreadsheet with a clear error if unavailable.
+ * In a container-bound script, getActiveSpreadsheet() should always work.
+ * If it fails, it means the script is not bound to a sheet or was run from a standalone context.
+ */
+function getSpreadsheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error(
+      "No active spreadsheet found. Ensure this script is bound to a Google Sheet (Extensions > Apps Script)."
+    );
+  }
+  return ss;
+}
+
+/**
  * Dynamically find the "Jan" column index in a fees sheet
  * This ensures correct month column mapping regardless of sheet structure
  */
@@ -361,7 +369,7 @@ function jsonResponse(data) {
 // STUDENT FUNCTIONS
 // ============================================
 function getStudentsWithPaymentStatus(branch, month) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -471,7 +479,7 @@ function getStudentsWithPaymentStatus(branch, month) {
 }
 
 function markStudentPaid(studentId, branch, month) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -502,7 +510,7 @@ function markStudentPaid(studentId, branch, month) {
 }
 
 function addNewStudent(payload) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[payload.branch];
 
   if (!config) throw new Error("Invalid branch: " + payload.branch);
@@ -587,7 +595,7 @@ function getDashboardStats(branch, month) {
 }
 
 function getBranchCounts() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const heroSheet = ss.getSheetByName("DB_Herohalli");
   const mpSheet = ss.getSheetByName("DB_MP");
 
@@ -601,7 +609,7 @@ function getBranchCounts() {
  * Mark a student as on Break for a specific month
  */
 function markStudentBreak(studentId, branch, month) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch] || CONFIG.branches["Herohalli"];
   const feesSheet = ss.getSheetByName(config.fees);
   const dbSheet = ss.getSheetByName(config.db);
@@ -664,7 +672,7 @@ function markStudentBreak(studentId, branch, month) {
  * Mark a student as Discontinued
  */
 function markStudentDiscontinued(studentId, branch, month) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch] || CONFIG.branches["Herohalli"];
   const feesSheet = ss.getSheetByName(config.fees);
   const dbSheet = ss.getSheetByName(config.db);
@@ -749,7 +757,7 @@ function markStudentDiscontinued(studentId, branch, month) {
  * Get comprehensive financial summary for bank reconciliation
  */
 function getFinancialSummary(branch, month) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -795,11 +803,11 @@ function getFinancialSummary(branch, month) {
   const feesSheet = ss.getSheetByName(config.fees);
   let devFundAllocation = 0;
   let cumulativeAllocation = 0;
+  const limitMonth = month === -1 ? 11 : month; // Iterate up to current request
   
   if (feesSheet) {
     const feesJanColIndex = getJanColumnIndex(feesSheet);
     const feesData = feesSheet.getDataRange().getValues();
-    const limitMonth = month === -1 ? 11 : month; // Iterate up to current request
 
     for (let m = 0; m <= limitMonth; m++) {
       let monthCollected = 0;
@@ -960,7 +968,7 @@ function getFinancialSummary(branch, month) {
  * HELPER: Get all development expenses from all sources (Unified)
  */
 function getAllDevelopmentExpenses() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const allExpenses = [];
   const branches = ["Herohalli", "MPSC"];
   
@@ -1035,7 +1043,7 @@ function getAllDevelopmentExpenses() {
  * Get development fund data for a branch (Specific View)
  */
 function getDevelopmentFundData(branch) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -1158,7 +1166,7 @@ function getDevelopmentFundData(branch) {
  * Get unified development fund data combining both branches
  */
 function getDevelopmentFundDataUnified() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
 
   // Initialize monthly totals
   const monthlyData = [];
@@ -1269,7 +1277,7 @@ function getDevelopmentFundDataUnified() {
  * Now stores in Herohalli DevFund sheet with scope field
  */
 function addDevelopmentExpense(month, title, description, scope, amount) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches["Herohalli"]; // Store all in Herohalli sheet
 
   let devFundSheet = ss.getSheetByName(config.devFund);
@@ -1339,7 +1347,7 @@ function addDevelopmentExpense(month, title, description, scope, amount) {
  * Delete a development expense (only within 24 hours of creation)
  */
 function deleteDevelopmentExpense(expenseId) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
 
   // Search in both branch sheets
   const branches = ["Herohalli", "MPSC"];
@@ -1384,7 +1392,7 @@ function deleteDevelopmentExpense(expenseId) {
  * Get all referral credits for a branch
  */
 function getReferralCredits(branch) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -1446,7 +1454,7 @@ function addReferralCredit(
   usedInMonth,
   usedDate,
 ) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -1538,7 +1546,7 @@ function addReferralCredit(
  * Apply (use) a referral credit
  */
 function applyReferralCredit(creditId, branch, month) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -1578,7 +1586,7 @@ function applyReferralCredit(creditId, branch, month) {
  * Get available (unused) credits for a specific student
  */
 function getStudentAvailableCredits(studentId, branch) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch];
 
   if (!config) throw new Error("Invalid branch: " + branch);
@@ -1646,7 +1654,7 @@ function markStudentPaidWithCredit(studentId, branch, month, creditId) {
 // DEBUG FUNCTION - Check Fees Sheet Structure
 // ============================================
 function debugFeesSheet(branch) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const config = CONFIG.branches[branch] || CONFIG.branches["Herohalli"];
   
   const feesSheet = ss.getSheetByName(config.fees);
