@@ -274,44 +274,7 @@ export default function FinancesPage() {
               </div>
             </div>
 
-            {/* COMPOUND GROWTH CHART */}
-            {data.yearlyBreakdown && data.yearlyBreakdown.length > 0 && (
-              <div className="mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
-                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-3 ml-1">
-                  Cumulative Growth (Bank Balance)
-                </p>
-                <div className="glass-card p-4 overflow-x-auto">
-                  <div className="h-48 flex items-end justify-between gap-2 min-w-[300px]">
-                    {(() => {
-                      const maxVal = Math.max(...data.yearlyBreakdown.map(d => d.cumulativeBank), 1000);
-                      return data.yearlyBreakdown.map((item, i) => {
-                        if (i > month) return null; // Show only up to selected month
-                        const heightPercent = Math.max(5, (item.cumulativeBank / maxVal) * 100);
-                        return (
-                          <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
-                            <div className="w-full relative flex items-end justify-center">
-                              {/* Bar */}
-                              <div
-                                className="w-full mx-0.5 bg-gradient-to-t from-green-500/20 to-green-400/80 rounded-t-sm group-hover:to-green-300 transition-all duration-300 relative"
-                                style={{ height: `${heightPercent * 1.5}px`, maxHeight: '100%' }} // Scale a bit
-                              >
-                                {/* Tooltip */}
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-black/90 border border-white/10 p-2 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
-                                  <p className="text-green-400 font-bold">₹{item.cumulativeBank.toLocaleString()}</p>
-                                  <p className="text-[var(--text-muted)]">Net Bank Balance</p>
-                                  <p className="text-white/50 mt-1">Rev: +₹{item.revenue.toLocaleString()}</p>
-                                </div>
-                              </div>
-                            </div>
-                            <p className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">{item.month}</p>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
-              </div>
-            )}
+
 
             {/* Development Fund */}
             <div className="mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>

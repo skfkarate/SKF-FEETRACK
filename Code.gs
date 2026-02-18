@@ -944,21 +944,36 @@ function getFinancialSummary(branch, month) {
   const feesSheet = ss.getSheetByName(config.fees);
   let devFundAllocation = 0;
   let cumulativeAllocation = 0;
+  
+  // Cumulative Totals
+  let totalCollected = 0;
+  let totalPending = 0;
+  
   const limitMonth = month === -1 ? 11 : month;
   
   if (feesSheet) {
     const feesJanColIndex = getJanColumnIndex(feesSheet);
     const feesData = feesSheet.getDataRange().getValues();
 
-    // Iterate ALL months for breakdown, but only sum up to limitMonth for totals
+    // Iterate ALL months for breakdown, but totals depend on limitMonth
     for (let m = 0; m < 12; m++) {
       let monthCollected = 0;
+      let monthPending = 0;
       const monthCol = feesJanColIndex + m;
 
       for (let i = 1; i < feesData.length; i++) {
-        const value = String(feesData[i][monthCol] || "").trim();
-        if (value === "Paid" || value === "PAID") {
-          monthCollected += Number(feesData[i][2]) || 0;
+        const row = feesData[i];
+        if (!row) continue;
+        
+        const value = String(row[monthCol] || "").trim().toLowerCase();
+        const feeAmount = Number(row[2]) || 0;
+
+        if (value === "paid") {
+          monthCollected += feeAmount;
+        } else if (value === "pending") {
+           // Only count pending if student is active/joined? 
+           // Usually the sheet cell "Pending" implies it is due.
+           monthPending += feeAmount;
         }
       }
 
@@ -972,6 +987,8 @@ function getFinancialSummary(branch, month) {
 
       if (m <= limitMonth) {
           cumulativeAllocation += allocation;
+          totalCollected += monthCollected;
+          totalPending += monthPending;
       }
 
       if (month !== -1 && m === month) {
@@ -1011,14 +1028,24 @@ function getFinancialSummary(branch, month) {
 
     if (expense.month <= limitMonth) {
        cumulativeExpenses += weightedAmount;
+       // For "cumulative dev fund spent" in the cumulative view
+       if (month !== -1) devFundSpent += weightedAmount;
     }
 
     if (month === -1) {
        devFundSpent += weightedAmount;
-    } else if (expense.month === month) {
-       devFundSpent += weightedAmount;
-    }
+    } 
+    // Note: Previously we only showed SINGLE month spent if month != -1.
+    // Converting to CUMULATIVE:
+    // If month selected is Feb, show Jan+Feb expenses.
+    // The loop above `if (expense.month <= limitMonth)` handles this accumulation.
+    // So `devFundSpent` should be `cumulativeExpenses`.
   });
+
+  if (month !== -1) {
+      devFundSpent = cumulativeExpenses; // Enforce cumulative
+      devFundAllocation = cumulativeAllocation; // Enforce cumulative
+  }
 
   devFundBalance = cumulativeAllocation - cumulativeExpenses;
 
@@ -1028,37 +1055,28 @@ function getFinancialSummary(branch, month) {
   
   const dbSheet = ss.getSheetByName(config.db);
   if (dbSheet) {
-      // ... (existing db logic)
     const dbData = dbSheet.getDataRange().getValues();
     for (let i = 1; i < dbData.length; i++) {
         const row = dbData[i];
         const joinMonth = parseInt(row[9]);
         
-        // Count for totals logic
-        const matchesRequest = (month === -1) || (joinMonth === month);
+        // CUMULATIVE LOGIC: Include if joinMonth <= limitMonth
+        const matchesRequest = !isNaN(joinMonth) && joinMonth <= limitMonth;
         
         if (matchesRequest) {
             if (String(row[12]).trim() === "Paid") admissionCollected += Number(row[11]) || 0;
             if (String(row[15]).trim() === "Paid") dressProfit += (Number(row[13]) || 0) - (Number(row[14]) || 0);
         }
         
-        // Add to breakdown (assuming joinMonth is when it was paid)
+        // Breakdown logic (keeps monthly buckets)
         if (!isNaN(joinMonth) && joinMonth >= 0 && joinMonth < 12) {
              if (String(row[12]).trim() === "Paid") monthlyStats[joinMonth].revenue += Number(row[11]) || 0;
              if (String(row[15]).trim() === "Paid") monthlyStats[joinMonth].revenue += (Number(row[13]) || 0) - (Number(row[14]) || 0);
-             // Dev fund is 30% of standard fees only? Or total revenue?
-             // Usually Dev Fund is from Tuition Fees.
-             // If Admission/Dress also contribute 30%, uncomment below:
-             // monthlyStats[joinMonth].devFund += ( ... ) * 0.30;
-             // Assuming Dev Fund is ONLY on tuition fees for now based on previous logic (calculated from feesSheet).
-             // (User said "minusing the development fee... and whatever is left out")
-             // So Admission/Dress go 100% to Bank? Or also subject to split?
-             // Keeping it simple: Admission/Dress are EXTRA operational cash.
         }
     }
   }
 
-  // 5. Construct Yearly Breakdown
+  // 5. Construct Yearly Breakdown (Unchanged logic, just data source)
   const yearlyBreakdown = [];
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   let runRevenue = 0;
@@ -1066,14 +1084,10 @@ function getFinancialSummary(branch, month) {
 
   for (let m = 0; m < 12; m++) {
       const s = monthlyStats[m];
-      const netForBank = s.revenue - s.devFund; // Operational Cash = Revenue - DevFundAllocation
+      const netForBank = s.revenue - s.devFund;
       
       runRevenue += s.revenue;
       runBank += netForBank; 
-      // Note: Expenses are paid from Dev Fund, so they don't reduce "Operational Bank Balance" directly 
-      // regarding the separation of concerns. 
-      // "Bank" = (70% Tuition + Admission + Dress).
-      // "Dev Fund" = (30% Tuition) - Expenses.
       
       yearlyBreakdown.push({
           month: monthNames[m],
@@ -1086,18 +1100,57 @@ function getFinancialSummary(branch, month) {
       });
   }
 
-  // 6. Student Payment Stats (Live)
-  let expected = 0;
-  let collected = 0;
+  // 6. Student Payment Stats (Live Counts)
   let activeCount = 0;
   let paidCount = 0;
+  let pendingCount = 0;
 
-  // ... (existing student stats logic) - reusing for single branch
-  if (month === -1) {
-    const studentsResult = getStudentsWithPaymentStatus(branch, 0); 
-    const students = studentsResult.students;
-    const active = students.filter((s) => s.status === "Active");
-    activeCount = active.length;
+  // For counts, we probably want the SNAPSHOT of the selected month
+  // OR the "Number of students involved in this cumulative period"?
+  // Typically "Active Students" means "Currently Active".
+  // If I select "Feb", I want to know who is active in Feb.
+  // Using `limitMonth` to get status:
+  const studentsResult = getStudentsWithPaymentStatus(branch, limitMonth); 
+  const students = studentsResult.students;
+  const active = students.filter((s) => s.status === "Active");
+  activeCount = active.length;
+  
+  // Paid/Pending COUNTS for the *snapshot* or cumulative?
+  // User asked for "amounts" to be cumulative.
+  // Let's stick to snapshot counts for meaningful "Headcount".
+  // "How many paid in Feb" vs "How many paid YTD".
+  // YTD Paid Students is count of distinct students?
+  // Let's use the snapshot counts from `getStudentsWithPaymentStatus` for consistency with the list view
+  // (which shows the selected month's status).
+  paidCount = active.filter(s => s.monthStatus === "Paid").length;
+  pendingCount = active.filter(s => s.monthStatus === "Pending").length;
+
+  // Override financials with CUMULATIVE values calculated above
+  const totalExpected = totalCollected + totalPending;
+  const totalActualReceived = totalCollected - creditsApplied; // creditsApplied is also summed 0..limitMonth
+  
+  return {
+    month: month,
+    branch: branch,
+    activeStudents: activeCount,
+    paidStudents: paidCount,
+    pendingStudents: pendingCount,
+    expected: totalExpected,
+    collected: totalCollected,
+    pending: totalPending,
+    creditsApplied: creditsApplied, // This was already accumulatd above in Step 1 loop
+    creditDetails: creditDetails,
+    actualReceived: totalActualReceived,
+    devFundAllocation: devFundAllocation,
+    devFundSpent: devFundSpent,
+    devFundBalance: devFundBalance,
+    totalContributions: cumulativeAllocation,
+    availableBalance: devFundBalance, // same as balance
+    yearlyBreakdown: yearlyBreakdown,
+    admissionCollected: admissionCollected,
+    dressProfit: dressProfit
+  };
+}
     
     let totalPaidRecords = 0;
     const feesLookup = {};
