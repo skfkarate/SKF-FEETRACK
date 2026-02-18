@@ -87,33 +87,34 @@ export default function FinancesPage() {
 
       <main className="max-w-2xl mx-auto p-4 pt-24">
         {/* Branch Toggle */}
-        <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-lg mx-auto border border-white/5 mb-6">
+        {/* Branch Toggle - Pill Style */}
+        <div className="flex p-1 bg-black/40 rounded-full w-full max-w-md mx-auto border border-white/10 mb-8 backdrop-blur-md shadow-2xl">
           <button
             onClick={() => setBranch("Overall")}
-            className={`flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "Overall"
-              ? "bg-purple-600/90 text-white shadow-lg shadow-purple-900/20 border border-white/10"
-              : "text-[var(--text-muted)] hover:text-white"
+            className={`flex-1 py-2.5 rounded-full text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-widest transition-all duration-300 ${branch === "Overall"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25 border border-white/10"
+              : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
           >
             OVERALL
           </button>
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "Herohalli"
-              ? "bg-red-600/90 text-white shadow-lg shadow-red-900/20 border border-white/10"
-              : "text-[var(--text-muted)] hover:text-white"
+            className={`flex-1 py-2.5 rounded-full text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-widest transition-all duration-300 ${branch === "Herohalli"
+              ? "bg-red-600 text-white shadow-lg shadow-red-500/25 border border-white/10"
+              : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
           >
             HEROHALLI
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "MPSC"
-              ? "bg-blue-600/90 text-white shadow-lg shadow-blue-900/20 border border-white/10"
-              : "text-[var(--text-muted)] hover:text-white"
+            className={`flex-1 py-2.5 rounded-full text-[10px] sm:text-xs font-[family-name:var(--font-space)] tracking-widest transition-all duration-300 ${branch === "MPSC"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25 border border-white/10"
+              : "text-white/40 hover:text-white hover:bg-white/5"
               }`}
           >
-            MP SPORTS
+            MPSC
           </button>
         </div>
 
@@ -220,7 +221,7 @@ export default function FinancesPage() {
                     <Ticket className="w-3 h-3" /> Admission
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-blue-400">
-                    ₹{data.admissionCollected?.toLocaleString() || 0}
+                    ₹{data?.admissionCollected?.toLocaleString() ?? 0}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
                     Collected this period
@@ -235,7 +236,7 @@ export default function FinancesPage() {
                     <Shirt className="w-3 h-3" /> Dress Profit
                   </p>
                   <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-pink-400">
-                    ₹{data.dressProfit?.toLocaleString() || 0}
+                    ₹{data?.dressProfit?.toLocaleString() ?? 0}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
                     Margin from dress fees
@@ -428,7 +429,7 @@ export default function FinancesPage() {
               <div className="mt-6 pt-4 border-t border-[var(--border)] flex justify-between items-center">
                 <p className="text-[var(--text-secondary)] text-sm">Total Applied</p>
                 <p className="font-[family-name:var(--font-space)] text-xl text-purple-400">
-                  ₹{data.creditsApplied.toLocaleString()}
+                  ₹{data?.creditsApplied?.toLocaleString() ?? 0}
                 </p>
               </div>
             </div>

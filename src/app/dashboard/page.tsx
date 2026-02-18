@@ -128,21 +128,7 @@ export default function DashboardPage() {
               </div>
             </Link>
 
-            {/* Message Center */}
-            <Link
-              href="/messages"
-              className="glass-card p-5 flex flex-col justify-between h-32 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all group col-span-2 sm:col-span-1"
-            >
-              <div className="bg-cyan-500/20 w-10 h-10 rounded-lg flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-[family-name:var(--font-space)] text-sm font-bold text-white leading-tight mb-1">
-                  Message Center
-                </h3>
-                <p className="text-[10px] text-[var(--text-muted)]">Fee Reminders & Alerts</p>
-              </div>
-            </Link>
+
           </div>
         </div>
 
