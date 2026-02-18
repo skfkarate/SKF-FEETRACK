@@ -3,7 +3,22 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Gift } from "lucide-react";
+import {
+  ArrowLeft,
+  Gift,
+  Users,
+  IndianRupee,
+  Target,
+  TrendingDown,
+  Search,
+  Filter,
+  Phone,
+  Calendar,
+  MoreVertical,
+  CheckCircle2,
+  Clock,
+  AlertCircle
+} from "lucide-react";
 
 import {
   getStudents,
@@ -19,6 +34,7 @@ import {
 
 import MonthlyFeeReceipt from "@/components/receipts/MonthlyFeeReceipt";
 import MonthSelector from "@/components/common/MonthSelector";
+import Navbar from "@/components/common/Navbar";
 
 const MONTHS = [
   "Jan",
@@ -345,71 +361,85 @@ export default function StudentList({ branch }: { branch: string }) {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-deep)" }}>
       {/* Header */}
-      <header className="header-glass px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-[var(--text-muted)] hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
-              {branchName}
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <MonthSelector
-                selectedMonth={month}
-                onMonthChange={(m: number) => {
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set("month", m.toString());
-                  router.push(`/students/${branch}?${params.toString()}`);
-                }}
-                className="!p-1 !bg-transparent border-none shadow-none text-xs"
-              />
+      <Navbar
+        title={branchName}
+        showBack
+        rightContent={
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex flex-col items-end mr-2">
+              <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                {MONTHS[month]} 2026
+              </span>
+              <span className="text-green-400 font-bold text-xs font-[family-name:var(--font-space)]">
+                {stats.paidCount}/{stats.totalStudents} Paid
+              </span>
             </div>
+            <MonthSelector
+              selectedMonth={month}
+              onMonthChange={(m: number) => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("month", m.toString());
+                router.push(`/students/${branch}?${params.toString()}`);
+              }}
+              className="scale-90 origin-right"
+            />
           </div>
-          <div className="text-right">
-            <p className="text-green-400 font-bold text-lg font-[family-name:var(--font-space)]">{stats.paidCount}</p>
-            <p className="text-[var(--text-muted)] text-xs">/ {stats.totalStudents}</p>
-          </div>
-        </div>
-      </header>
+        }
+      />
 
-      <main className="max-w-2xl mx-auto p-4">
+      <main className="max-w-2xl mx-auto p-4 pt-24">
         {/* Stats Dashboard */}
         {!loading && !error && (
-          <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in">
-            <div className="glass-card p-4">
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
-                Expected
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 animate-fade-in">
+            {/* Expected */}
+            <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                <Target className="w-12 h-12 text-blue-400" />
+              </div>
+              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Target className="w-3 h-3" /> Expected
               </p>
-              <p className="font-[family-name:var(--font-space)] text-xl text-white">
+              <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-blue-400">
                 ₹{stats.expectedAmount.toLocaleString()}
               </p>
             </div>
-            <div className="glass-card p-4" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
-                Collected
+
+            {/* Collected */}
+            <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                <CheckCircle2 className="w-12 h-12 text-green-400" />
+              </div>
+              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Collected
               </p>
-              <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
+              <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-green-400">
                 ₹{stats.collectedAmount.toLocaleString()}
               </p>
             </div>
-            <div className="glass-card p-4" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
-                Pending
+
+            {/* Pending */}
+            <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                <Clock className="w-12 h-12 text-amber-400" />
+              </div>
+              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Pending
               </p>
-              <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
+              <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-amber-400">
                 ₹{stats.pendingAmount.toLocaleString()}
               </p>
             </div>
-            <div className="glass-card p-4">
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1">
-                Rate
+
+            {/* Rate */}
+            <div className="glass-card p-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2 opacity-10">
+                <TrendingDown className="w-12 h-12 text-white" />
+              </div>
+              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3" /> Efficiency
               </p>
               <p
-                className={`font-[family-name:var(--font-space)] text-xl ${stats.collectionRate >= 80
+                className={`font-[family-name:var(--font-space)] text-lg sm:text-xl ${stats.collectionRate >= 80
                   ? "text-green-400"
                   : stats.collectionRate >= 50
                     ? "text-yellow-400"
@@ -423,32 +453,37 @@ export default function StudentList({ branch }: { branch: string }) {
         )}
 
         {/* Search & Actions */}
-        <div className="mb-4 space-y-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or SKF ID..."
-            className="input-field"
-          />
+        <div className="mb-6 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search student..."
+              className="input-field pl-10 bg-black/20 border-white/5 focus:border-white/10 placeholder:text-[var(--text-muted)] text-sm"
+            />
+          </div>
+
           <div className="flex gap-2">
             <button
               onClick={() => setShowPendingOnly(!showPendingOnly)}
-              className={`px-4 py-2 text-sm rounded-lg border transition-all duration-200 font-medium tracking-wide ${showPendingOnly
-                ? "bg-red-600 border-red-500 text-white"
-                : "bg-transparent border-[var(--border)] text-[var(--text-secondary)] hover:border-red-600/50"
+              className={`flex-1 px-4 py-2.5 text-sm rounded-lg border transition-all duration-200 font-medium tracking-wide flex items-center justify-center gap-2 ${showPendingOnly
+                ? "bg-amber-600/20 border-amber-500/50 text-amber-400"
+                : "bg-white/5 border-white/5 text-[var(--text-secondary)] hover:bg-white/10"
                 }`}
             >
-              {showPendingOnly ? "✓ Pending" : "Pending Only"}
+              <Filter className="w-3 h-3" />
+              {showPendingOnly ? "Pending View" : "All Students"}
             </button>
             <button
               onClick={() => {
                 setNewStudent({ ...newStudent, joinMonth: month });
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 text-sm rounded-lg border border-green-600/50 text-green-400 hover:bg-green-600 hover:text-white transition-all duration-200 font-medium tracking-wide"
+              className="flex-1 px-4 py-2.5 text-sm rounded-lg border border-green-600/30 bg-green-600/10 text-green-400 hover:bg-green-600 hover:text-white transition-all duration-200 font-medium tracking-wide flex items-center justify-center gap-2"
             >
-              + Add Student
+              <span>+ Add Student</span>
             </button>
           </div>
         </div>
@@ -490,78 +525,90 @@ export default function StudentList({ branch }: { branch: string }) {
                 return (
                   <div
                     key={student.id}
-                    className={`glass-card p-4 transition-all duration-200 animate-slide-up ${isDiscontinued
-                      ? "opacity-35"
+                    className={`glass-card p-4 transition-all duration-200 animate-slide-up hover:border-white/10 group ${isDiscontinued
+                      ? "opacity-40 grayscale"
                       : isBreak
-                        ? "opacity-50"
+                        ? "opacity-60"
                         : ""
                       }`}
                     style={{ animationDelay: `${Math.min(index * 30, 300)}ms`, animationFillMode: "backwards" }}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-[family-name:var(--font-space)] text-base tracking-wide truncate">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-[family-name:var(--font-space)] text-base tracking-wide text-white group-hover:text-amber-400 transition-colors truncate">
                             {student.name}
                           </h3>
+                          {/* Status Tags */}
                           {isBreak && (
-                            <span className="status-break text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wider">
-                              BREAK
-                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded border border-yellow-500/50 text-yellow-500 uppercase tracking-wider">Break</span>
                           )}
                           {isDiscontinued && (
-                            <span className="status-discontinued text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wider">
-                              LEFT
+                            <span className="text-[10px] px-1.5 py-0.5 rounded border border-red-500/50 text-red-500 uppercase tracking-wider">Left</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3 text-[var(--text-muted)] text-xs">
+                          <span className="font-mono opacity-70">{student.id}</span>
+                          <span className="flex items-center gap-1">
+                            <IndianRupee className="w-3 h-3" /> {student.fee}
+                          </span>
+                          {student.phone && (
+                            <span className="flex items-center gap-1 opacity-70">
+                              <Phone className="w-3 h-3" /> {student.phone}
                             </span>
                           )}
                         </div>
-                        <p className="text-[var(--text-muted)] text-xs font-mono mt-0.5">
-                          {student.id}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-[var(--text-secondary)] text-sm">₹{student.fee}</p>
-                          {(student.creditApplied || 0) > 0 && (
-                            <span className="flex items-center gap-1 text-[10px] bg-purple-900/40 text-purple-400 px-1.5 py-0.5 rounded-full border border-purple-500/30">
-                              <Gift className="w-3 h-3" />
-                              -₹{student.creditApplied}
-                            </span>
-                          )}
-                        </div>
+
+                        {(student.creditApplied || 0) > 0 && (
+                          <div className="mt-2 inline-flex items-center gap-1.5 text-[10px] bg-purple-500/10 text-purple-300 px-2 py-1 rounded-md border border-purple-500/20">
+                            <Gift className="w-3 h-3" />
+                            <span>Credit Applied: ₹{student.creditApplied}</span>
+                          </div>
+                        )}
                       </div>
-                      {student.monthStatus === "Paid" ? (
-                        <button
-                          onClick={() => setReceiptStudent(student)}
-                          className="status-paid px-3 py-1.5 rounded-lg font-[family-name:var(--font-space)] text-xs tracking-wider hover:brightness-110 transition-all cursor-pointer"
-                        >
-                          ✓ PAID
-                        </button>
-                      ) : isInactive ? (
-                        <span
-                          className={`px-3 py-1.5 font-[family-name:var(--font-space)] text-xs tracking-wider rounded-lg ${isBreak ? "status-break" : "status-discontinued"
-                            }`}
-                        >
-                          {isBreak ? "ON BREAK" : "LEFT"}
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleMarkPaidClick(student)}
-                          onMouseDown={() => handleLongPressStart(student)}
-                          onMouseUp={handleLongPressEnd}
-                          onMouseLeave={handleLongPressEnd}
-                          onTouchStart={() => handleLongPressStart(student)}
-                          onTouchEnd={handleLongPressEnd}
-                          disabled={
-                            markingPaid === student.id ||
-                            markingStatus === student.id
-                          }
-                          className="btn-primary !px-3 !py-1.5 font-[family-name:var(--font-space)] text-xs tracking-wider disabled:opacity-50 select-none"
-                        >
-                          {markingPaid === student.id ||
-                            markingStatus === student.id
-                            ? "..."
-                            : "MARK PAID"}
-                        </button>
-                      )}
+
+                      {/* Action Button */}
+                      <div className="flex-shrink-0">
+                        {student.monthStatus === "Paid" ? (
+                          <button
+                            onClick={() => setReceiptStudent(student)}
+                            className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-2 rounded-lg font-[family-name:var(--font-space)] text-xs tracking-wider hover:bg-green-500/20 transition-all flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 className="w-3 h-3" /> PAID
+                          </button>
+                        ) : isInactive ? (
+                          <div className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider font-medium px-2 py-1">
+                            {student.monthStatus}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleMarkPaidClick(student)}
+                            onMouseDown={() => handleLongPressStart(student)}
+                            onMouseUp={handleLongPressEnd}
+                            onMouseLeave={handleLongPressEnd}
+                            onTouchStart={() => handleLongPressStart(student)}
+                            onTouchEnd={handleLongPressEnd}
+                            disabled={
+                              markingPaid === student.id ||
+                              markingStatus === student.id
+                            }
+                            className={`px-4 py-2 rounded-lg font-[family-name:var(--font-space)] text-xs tracking-wider transition-all border select-none flex items-center gap-2 ${markingPaid === student.id
+                              ? "bg-white/5 text-[var(--text-muted)] border-white/5"
+                              : "bg-white text-black border-white hover:bg-gray-200 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                              }`}
+                          >
+                            {markingPaid === student.id || markingStatus === student.id ? (
+                              "..."
+                            ) : (
+                              <>
+                                <span>MARK PAID</span>
+                                <MoreVertical className="w-3 h-3 opacity-50" />
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -571,7 +618,7 @@ export default function StudentList({ branch }: { branch: string }) {
         )}
       </main>
 
-      {/* Confirm Payment Modal */}
+      {/* Confirm Payment Modal (Keep existing logic, just check styles if needed) */}
       {confirmStudent && (
         <div className="glass-modal-overlay">
           <div className="glass-modal">

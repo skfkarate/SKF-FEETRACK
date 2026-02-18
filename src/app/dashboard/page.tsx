@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, Wallet, MessageSquare, PiggyBank } from "lucide-react";
-import MonthSelector from "@/components/common/MonthSelector";
+import Navbar from "@/components/common/Navbar";
+import NavMenu from "@/components/common/NavMenu";
 
 function getAuthenticatedUser(): string | null {
   if (typeof window === "undefined") return null;
@@ -20,194 +20,136 @@ function getAuthenticatedUser(): string | null {
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
-
-  // Load selected month from session storage on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("skf_selected_month");
-      if (saved !== null) {
-        setSelectedMonth(parseInt(saved));
-      }
-      setIsStorageLoaded(true);
-    }
-  }, []);
-
-  // Save selected month to session storage when it modifies, but only after initial load
-  useEffect(() => {
-    if (isStorageLoaded && typeof window !== "undefined") {
-      sessionStorage.setItem("skf_selected_month", selectedMonth.toString());
-    }
-  }, [selectedMonth, isStorageLoaded]);
 
   useEffect(() => {
     const u = getAuthenticatedUser();
     if (!u) {
       router.push("/");
-      return;
-    }
-    if (u !== user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+    } else {
       setUser(u);
     }
-  }, [router, user]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("skf_user");
-    localStorage.removeItem("skf_login_time");
-    router.push("/");
-  };
+  }, [router]);
 
   if (!user) return null;
 
-  const branches = [
-    { id: "Herohalli", name: "HEROHALLI", subtitle: "Main Branch" },
-    { id: "MPSC", name: "MP SPORTS CLUB", subtitle: "Secondary Branch" },
-  ];
-
   return (
     <div className="min-h-screen" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(220,38,38,0.06) 0%, var(--bg-deep) 50%)" }}>
-      {/* Header */}
-      <header className="header-glass px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="https://skfkarate.github.io/SKF-FEETRACK/logo.png"
-              alt="SKF"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain rounded-full border border-white/10"
-            />
-            <h1 className="font-[family-name:var(--font-space)] text-xl font-bold tracking-[0.15em]">
-              SKF <span className="text-red-500">KARATE</span>
-            </h1>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-[var(--text-muted)] hover:text-white text-xs tracking-wider uppercase transition-colors px-3 py-2 rounded-lg hover:bg-white/5"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+      <Navbar isDashboard rightContent={<NavMenu />} />
 
-      <main className="max-w-2xl mx-auto p-4">
-        {/* Welcome */}
-        <div className="text-center py-8 animate-fade-in">
-          <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.2em] mb-2">
+      <main className="max-w-2xl mx-auto p-4 pt-24 pb-20">
+        {/* Welcome Hero */}
+        <div className="mb-8 animate-fade-in">
+          <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.2em] mb-2 font-medium">
             Welcome back
           </p>
-          <h2 className="font-[family-name:var(--font-space)] text-3xl font-bold uppercase tracking-wider gradient-text">
-            {user.charAt(0).toUpperCase() + user.slice(1)} Sensei
+          <h2 className="font-[family-name:var(--font-space)] text-3xl sm:text-4xl font-bold uppercase tracking-wide text-white">
+            {user.charAt(0).toUpperCase() + user.slice(1)} <span className="text-[var(--text-muted)] font-light">Sensei</span>
           </h2>
         </div>
 
-        {/* Month Selection */}
-        <div className="mb-8 animate-slide-up delay-1">
-          <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.15em] mb-3 text-center font-medium">
-            Select Month
+        {/* Branch Section */}
+        <div className="space-y-4 animate-slide-up delay-1 mb-10">
+          <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.2em] font-bold opacity-70 ml-1">
+            Student Management
           </p>
-          <MonthSelector
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
-            className="max-w-xs mx-auto"
-          />
+
+          {/* Herohalli - Primary Branch */}
+          <Link
+            href="/students/Herohalli"
+            className="group relative overflow-hidden rounded-2xl h-32 flex items-center justify-between p-6 transition-all duration-300 hover:scale-[1.02]"
+            style={{
+              background: "linear-gradient(135deg, rgba(220,38,38,0.2) 0%, rgba(0,0,0,0.4) 100%)",
+              border: "1px solid rgba(220,38,38,0.3)"
+            }}
+          >
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&q=80')] opacity-20 bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" />
+            <div className="relative z-10">
+              <span className="text-red-400 text-[10px] tracking-[0.2em] uppercase font-bold block mb-1">Main Branch</span>
+              <h3 className="font-[family-name:var(--font-space)] text-2xl font-bold text-white tracking-wider">HEROHALLI</h3>
+            </div>
+            <div className="relative z-10 w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center border border-red-500/30 group-hover:bg-red-600 group-hover:text-white transition-all text-red-400">
+              <ArrowRight className="w-5 h-5" />
+            </div>
+          </Link>
+
+          {/* MPSC - Secondary Branch */}
+          <Link
+            href="/students/MPSC"
+            className="group relative overflow-hidden rounded-2xl h-24 flex items-center justify-between p-6 transition-all duration-300 hover:scale-[1.02]"
+            style={{
+              background: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0.4) 100%)",
+              border: "1px solid rgba(59,130,246,0.25)"
+            }}
+          >
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&q=80')] opacity-10 bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" />
+            <div className="relative z-10">
+              <span className="text-blue-400 text-[10px] tracking-[0.2em] uppercase font-bold block mb-1">Secondary Branch</span>
+              <h3 className="font-[family-name:var(--font-space)] text-xl font-bold text-white tracking-wider">MP SPORTS CLUB</h3>
+            </div>
+            <div className="relative z-10 w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center border border-blue-500/30 group-hover:bg-blue-600 group-hover:text-white transition-all text-blue-400">
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </Link>
         </div>
 
-        {/* Branch Cards */}
-        <div className="space-y-3 animate-slide-up delay-2">
-          <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.15em] text-center font-medium">
-            Select Branch
+        {/* Quick Links Grid */}
+        <div className="animate-slide-up delay-2">
+          <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.2em] font-bold opacity-70 ml-1 mb-4">
+            Analytics & Tools
           </p>
-          {branches.map((branch) => (
+          <div className="grid grid-cols-2 gap-3">
+            {/* Financial Analytics */}
             <Link
-              key={branch.id}
-              href={`/students/${branch.id}?month=${selectedMonth}`}
-              className="glass-card block p-5 group relative overflow-hidden
-                         hover:border-red-600/40 transition-all duration-300"
+              href="/finances"
+              className="glass-card p-5 flex flex-col justify-between h-32 hover:border-green-500/50 hover:bg-green-500/5 transition-all group"
             >
-              {/* Left accent */}
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600
-                              transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-white">
-                    {branch.name}
-                  </h3>
-                  <p className="text-[var(--text-muted)] text-xs mt-0.5">{branch.subtitle}</p>
-                </div>
-                <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-red-500 transition-all duration-300 group-hover:translate-x-1" />
+              <div className="bg-green-500/20 w-10 h-10 rounded-lg flex items-center justify-center text-green-400 group-hover:scale-110 transition-transform">
+                <Wallet className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-[family-name:var(--font-space)] text-sm font-bold text-white leading-tight mb-1">
+                  Financial Analytics
+                </h3>
+                <p className="text-[10px] text-[var(--text-muted)]">Reconciliation & Overview</p>
               </div>
             </Link>
-          ))}
-        </div>
 
-        {/* Finance & Tracking */}
-        <div className="mt-10 space-y-3 animate-slide-up delay-3">
-          <p className="text-[var(--text-muted)] text-xs uppercase tracking-[0.15em] text-center font-medium">
-            Finance & Tracking
-          </p>
+            {/* Development Fund */}
+            <Link
+              href="/development"
+              className="glass-card p-5 flex flex-col justify-between h-32 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all group"
+            >
+              <div className="bg-amber-500/20 w-10 h-10 rounded-lg flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                <PiggyBank className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-[family-name:var(--font-space)] text-sm font-bold text-white leading-tight mb-1">
+                  Development Fund
+                </h3>
+                <p className="text-[10px] text-[var(--text-muted)]">30% Fund Allocation</p>
+              </div>
+            </Link>
 
-          <Link
-            href="/finances"
-            className="glass-card block p-5 group relative overflow-hidden
-                       hover:border-green-600/40 transition-all duration-300"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500
-                            transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-green-400 flex items-center gap-2">
-                  <Wallet className="w-5 h-5" />
-                  FINANCIAL SUMMARY
-                </h3>
-                <p className="text-[var(--text-muted)] text-xs mt-0.5">Bank Reconciliation & Overview</p>
+            {/* Message Center */}
+            <Link
+              href="/messages"
+              className="glass-card p-5 flex flex-col justify-between h-32 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all group col-span-2 sm:col-span-1"
+            >
+              <div className="bg-cyan-500/20 w-10 h-10 rounded-lg flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                <MessageSquare className="w-5 h-5" />
               </div>
-              <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-green-400 transition-all duration-300 group-hover:translate-x-1" />
-            </div>
-          </Link>
-
-          <Link
-            href="/messages"
-            className="glass-card block p-5 group relative overflow-hidden
-                       hover:border-cyan-600/40 transition-all duration-300"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500
-                            transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
-            <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-cyan-400 flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  MESSAGE CENTER
+                <h3 className="font-[family-name:var(--font-space)] text-sm font-bold text-white leading-tight mb-1">
+                  Message Center
                 </h3>
-                <p className="text-[var(--text-muted)] text-xs mt-0.5">WhatsApp Fee Reminders</p>
+                <p className="text-[10px] text-[var(--text-muted)]">Fee Reminders & Alerts</p>
               </div>
-              <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-cyan-400 transition-all duration-300 group-hover:translate-x-1" />
-            </div>
-          </Link>
-          <Link
-            href="/development"
-            className="glass-card block p-5 group relative overflow-hidden
-                       hover:border-amber-600/40 transition-all duration-300"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500
-                            transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 rounded-r" />
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-[family-name:var(--font-space)] text-lg tracking-wider text-amber-400 flex items-center gap-2">
-                  <PiggyBank className="w-5 h-5" />
-                  DEVELOPMENT FUND
-                </h3>
-                <p className="text-[var(--text-muted)] text-xs mt-0.5">30% Allocation & Expenses</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-amber-400 transition-all duration-300 group-hover:translate-x-1" />
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[var(--text-muted)] text-[10px] mt-10 mb-4 tracking-wider uppercase">
+        <p className="text-center text-[var(--text-muted)] text-[10px] mt-12 opacity-50 tracking-widest uppercase">
           Sports Karate-do Fitness & Self Defence Association ®
         </p>
       </main>

@@ -12,9 +12,12 @@ import {
   Clock,
   Gift,
   X,
+  PiggyBank,
+  Wallet,
 } from "lucide-react";
 
 import MonthSelector from "@/components/common/MonthSelector";
+import Navbar from "@/components/common/Navbar";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -64,65 +67,49 @@ export default function FinancesPage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-deep)" }}>
       {/* Header */}
-      <header className="header-glass px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-[var(--text-muted)] hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
-              FINANCIAL SUMMARY
-            </h1>
-            <p className="text-[var(--text-muted)] text-xs tracking-wider">
-              {branchName} • {MONTHS[month]} 2026
-            </p>
+      <Navbar
+        title="FINANCIAL ANALYTICS"
+        showBack
+        rightContent={
+          <div className="scale-90 origin-right">
+            <MonthSelector
+              selectedMonth={month}
+              onMonthChange={setMonth}
+            />
           </div>
-        </div>
-      </header>
+        }
+      />
 
-      <main className="max-w-2xl mx-auto p-4">
+      <main className="max-w-2xl mx-auto p-4 pt-24">
         {/* Branch Toggle */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-md mx-auto border border-white/5 mb-6">
           <button
             onClick={() => setBranch("Herohalli")}
-            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-space)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "Herohalli"
-              ? "bg-red-600 border-red-500 text-white"
-              : "glass-card !rounded-lg text-[var(--text-secondary)] hover:border-red-600/50"
+            className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "Herohalli"
+              ? "bg-red-600/90 text-white shadow-lg shadow-red-900/20 border border-white/10"
+              : "text-[var(--text-muted)] hover:text-white"
               }`}
           >
-            Herohalli
+            HEROHALLI
           </button>
           <button
             onClick={() => setBranch("MPSC")}
-            className={`flex-1 py-3 rounded-lg font-[family-name:var(--font-space)] text-sm tracking-wider uppercase transition-all duration-200 border ${branch === "MPSC"
-              ? "bg-red-600 border-red-500 text-white"
-              : "glass-card !rounded-lg text-[var(--text-secondary)] hover:border-red-600/50"
+            className={`flex-1 py-2 rounded-lg text-sm font-[family-name:var(--font-space)] tracking-wider transition-all duration-300 ${branch === "MPSC"
+              ? "bg-blue-600/90 text-white shadow-lg shadow-blue-900/20 border border-white/10"
+              : "text-[var(--text-muted)] hover:text-white"
               }`}
           >
-            MP Sports Club
+            MP SPORTS CLUB
           </button>
         </div>
 
-        {/* Month Filter */}
-        <div className="mb-6">
-          <label className="text-[var(--text-muted)] text-xs uppercase tracking-wider block mb-2 font-medium">
-            Select Month
-          </label>
-          <MonthSelector
-            selectedMonth={month}
-            onMonthChange={setMonth}
-            className="w-full"
-          />
-        </div>
+
 
         {/* Loading */}
         {loading && (
           <div className="text-center py-16">
             <div className="spinner mx-auto mb-4" />
-            <p className="text-[var(--text-muted)] text-sm">Loading financial data...</p>
+            <p className="text-[var(--text-muted)] text-sm">Loading analytics...</p>
           </div>
         )}
 
@@ -144,56 +131,71 @@ export default function FinancesPage() {
           <>
             {/* Collection Overview */}
             <div className="mb-6 animate-fade-in">
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider text-center mb-3">
-                Collections
+              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-3 ml-1">
+                Collection Metrics
               </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="glass-card p-4" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <BarChart3 className="w-12 h-12 text-blue-400" />
+                  </div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <BarChart3 className="w-3 h-3" /> Expected
                   </p>
-                  <p className="font-[family-name:var(--font-space)] text-xl text-blue-400">
+                  <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-blue-400">
                     ₹{data.expected.toLocaleString()}
                   </p>
-                  <p className="text-[var(--text-muted)] text-xs">
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
                     {data.activeStudents} active students
                   </p>
                 </div>
-                <div className="glass-card p-4" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+
+                <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(34, 197, 94, 0.25)" }}>
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <CheckCircle2 className="w-12 h-12 text-green-400" />
+                  </div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Collected
                   </p>
-                  <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
+                  <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-green-400">
                     ₹{data.collected.toLocaleString()}
                   </p>
-                  <p className="text-[var(--text-muted)] text-xs">
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
                     {data.paidStudents} students paid
                   </p>
                 </div>
-                <div className="glass-card p-4" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
+
+                <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(245, 158, 11, 0.25)" }}>
+                  <div className="absolute top-0 right-0 p-2 opacity-10">
+                    <Clock className="w-12 h-12 text-amber-400" />
+                  </div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Clock className="w-3 h-3" /> Pending
                   </p>
-                  <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
+                  <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-amber-400">
                     ₹{data.pending.toLocaleString()}
                   </p>
-                  <p className="text-[var(--text-muted)] text-xs">
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
                     {data.pendingStudents} students pending
                   </p>
                 </div>
+
                 <div
-                  className="glass-card p-4 cursor-pointer hover:border-purple-500/50 transition-all duration-200 group"
+                  className="glass-card p-4 relative overflow-hidden cursor-pointer hover:border-purple-500/50 transition-all duration-200 group"
                   style={{ borderColor: "rgba(168, 85, 247, 0.25)" }}
                   onClick={() => setShowCreditDetails(true)}
                 >
+                  <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Gift className="w-12 h-12 text-purple-400" />
+                  </div>
                   <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Gift className="w-3 h-3" /> Credits
                   </p>
-                  <p className="font-[family-name:var(--font-space)] text-xl text-purple-400">
+                  <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-purple-400">
                     -₹{data.creditsApplied.toLocaleString()}
                   </p>
-                  <p className="text-[var(--text-muted)] text-xs group-hover:text-purple-400 transition-colors">
-                    Click to view details
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70 group-hover:text-purple-300 transition-colors">
+                    Tap to view details
                   </p>
                 </div>
               </div>
@@ -201,33 +203,50 @@ export default function FinancesPage() {
 
             {/* Bank Reconciliation */}
             <div className="mb-6 animate-fade-in" style={{ animationDelay: "100ms" }}>
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider text-center mb-3">
-                Bank Reconciliation
+              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-3 ml-1">
+                Net Position
               </p>
-              <div className="glass-card p-6 text-center" style={{ borderColor: "rgba(34, 197, 94, 0.4)", borderWidth: "2px" }}>
-                <p className="text-[var(--text-secondary)] text-sm mb-2">
-                  Amount in Bank (This Month)
-                </p>
-                <p className="font-[family-name:var(--font-space)] text-4xl text-green-400">
-                  ₹{data.actualReceived.toLocaleString()}
-                </p>
-                <p className="text-[var(--text-muted)] text-sm mt-2">
-                  Collected (₹{data.collected.toLocaleString()}) - Credits (₹
-                  {data.creditsApplied.toLocaleString()})
-                </p>
+              <div className="glass-card p-6 relative overflow-hidden group"
+                style={{
+                  borderColor: "rgba(34, 197, 94, 0.4)",
+                  background: "linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(34,197,94,0.05) 100%)"
+                }}>
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Wallet className="w-32 h-32 text-green-400" />
+                </div>
+
+                <div className="relative z-10 text-center">
+                  <p className="text-[var(--text-secondary)] text-xs uppercase tracking-widest mb-2 font-medium">
+                    Actual Bank Deposit
+                  </p>
+                  <p className="font-[family-name:var(--font-space)] text-3xl sm:text-4xl text-green-400 mb-2 drop-shadow-lg">
+                    ₹{data.actualReceived.toLocaleString()}
+                  </p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] text-[var(--text-muted)]">
+                    <span>Collected (₹{data.collected.toLocaleString()})</span>
+                    <span>-</span>
+                    <span>Credits (₹{data.creditsApplied.toLocaleString()})</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Development Fund */}
-            <div className="mb-6 animate-fade-in" style={{ animationDelay: "200ms" }}>
-              <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider text-center mb-3">
-                Development Fund (30%)
-              </p>
+            <div className="mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="flex items-center justify-between mb-3 ml-1">
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider">
+                  Development Fund (30%)
+                </p>
+                <Link href="/development" className="text-[10px] text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1">
+                  View Full Report <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+
               <div className="space-y-2">
-                <div className="glass-card p-4 flex justify-between items-center">
+                <div className="glass-card p-4 flex justify-between items-center group hover:border-blue-500/30 transition-colors">
                   <div>
-                    <p className="text-[var(--text-secondary)] text-sm">30% Allocation</p>
-                    <p className="text-[var(--text-muted)] text-xs">
+                    <p className="text-[var(--text-secondary)] text-sm font-medium group-hover:text-blue-200 transition-colors">30% Allocation</p>
+                    <p className="text-[var(--text-muted)] text-[10px] opacity-70">
                       From this month&apos;s collection
                     </p>
                   </div>
@@ -235,29 +254,38 @@ export default function FinancesPage() {
                     +₹{data.devFundAllocation.toLocaleString()}
                   </p>
                 </div>
-                <div className="glass-card p-4 flex justify-between items-center">
+
+                <div className="glass-card p-4 flex justify-between items-center group hover:border-red-500/30 transition-colors">
                   <div>
-                    <p className="text-[var(--text-secondary)] text-sm">
-                      Expenses (This Month)
+                    <p className="text-[var(--text-secondary)] text-sm font-medium group-hover:text-red-200 transition-colors">
+                      Expenses
                     </p>
-                    <p className="text-[var(--text-muted)] text-xs">
-                      Branch development costs
+                    <p className="text-[var(--text-muted)] text-[10px] opacity-70">
+                      This month&apos;s spending
                     </p>
                   </div>
                   <p className="font-[family-name:var(--font-space)] text-xl text-red-400">
                     -₹{data.devFundSpent.toLocaleString()}
                   </p>
                 </div>
-                <div className="glass-card p-4 flex justify-between items-center" style={{ borderColor: "rgba(59, 130, 246, 0.4)", borderWidth: "2px" }}>
+
+                <div className="glass-card p-4 flex justify-between items-center"
+                  style={{
+                    borderColor: "rgba(59, 130, 246, 0.4)",
+                    background: "rgba(59, 130, 246, 0.05)"
+                  }}>
                   <div>
-                    <p className="text-blue-400 text-sm font-bold">
-                      Dev Fund Balance
-                    </p>
-                    <p className="text-[var(--text-muted)] text-xs">
-                      Cumulative (all months)
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <PiggyBank className="w-4 h-4 text-blue-400" />
+                      <p className="text-blue-400 text-sm font-bold tracking-wide">
+                        Dev Fund Balance
+                      </p>
+                    </div>
+                    <p className="text-[var(--text-muted)] text-[10px] opacity-80">
+                      Cumulative available fund
                     </p>
                   </div>
-                  <p className="font-[family-name:var(--font-space)] text-2xl text-blue-400">
+                  <p className="font-[family-name:var(--font-space)] text-xl sm:text-2xl text-blue-400">
                     ₹{data.devFundBalance.toLocaleString()}
                   </p>
                 </div>
@@ -268,19 +296,30 @@ export default function FinancesPage() {
             <div className="grid grid-cols-2 gap-3 animate-fade-in" style={{ animationDelay: "300ms" }}>
               <Link
                 href="/development"
-                className="glass-card p-4 text-center hover:border-green-500/50 transition-all duration-200 flex items-center justify-center gap-2"
+                className="glass-card p-4 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all duration-300 group"
               >
-                <p className="text-green-400 text-sm flex items-center gap-1">
-                  Manage Dev Fund <ArrowRight className="w-4 h-4" />
-                </p>
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="p-2 rounded-full bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                    <Wallet className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <p className="text-[var(--text-secondary)] text-sm font-medium flex items-center gap-1 group-hover:text-white transition-colors">
+                    Manage Expenses
+                  </p>
+                </div>
               </Link>
+
               <Link
                 href="/referrals"
-                className="glass-card p-4 text-center hover:border-purple-500/50 transition-all duration-200 flex items-center justify-center gap-2"
+                className="glass-card p-4 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all duration-300 group"
               >
-                <p className="text-purple-400 text-sm flex items-center gap-1">
-                  Manage Credits <ArrowRight className="w-4 h-4" />
-                </p>
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="p-2 rounded-full bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                    <Gift className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <p className="text-[var(--text-secondary)] text-sm font-medium flex items-center gap-1 group-hover:text-white transition-colors">
+                    Manage Credits
+                  </p>
+                </div>
               </Link>
             </div>
           </>

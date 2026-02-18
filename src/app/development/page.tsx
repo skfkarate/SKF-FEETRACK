@@ -21,6 +21,7 @@ import {
   DevExpense,
 } from "@/lib/api";
 import MonthSelector from "@/components/common/MonthSelector";
+import Navbar from "@/components/common/Navbar";
 
 const MONTHS = [
   "Jan",
@@ -234,24 +235,17 @@ export default function DevelopmentFundPage() {
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-deep)" }}>
       {/* Header */}
-      <header className="header-glass px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-[var(--text-muted)] hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="font-[family-name:var(--font-space)] text-lg font-bold tracking-wider">
-              DEVELOPMENT FUND
-            </h1>
-            <p className="text-[var(--text-muted)] text-xs tracking-wider">All Branches • 30% Allocation</p>
+      <Navbar
+        title="DEVELOPMENT FUND"
+        showBack
+        rightContent={
+          <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider hidden sm:block">
+            30% Allocation
           </div>
-        </div>
-      </header>
+        }
+      />
 
-      <main className="max-w-2xl mx-auto p-4">
+      <main className="max-w-2xl mx-auto p-4 pt-24">
         {/* View Toggle & Month Selection */}
         <div className="mb-6 space-y-4">
           <div className="flex p-1 bg-black/20 rounded-xl w-full max-w-md mx-auto border border-white/5">
@@ -308,7 +302,7 @@ export default function DevelopmentFundPage() {
         {!loading && !error && data && (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 animate-fade-in">
               <div className="glass-card p-4 relative overflow-hidden" style={{ borderColor: "rgba(59, 130, 246, 0.25)" }}>
                 <div className="absolute top-0 right-0 p-2 opacity-10">
                   <PiggyBank className="w-12 h-12 text-blue-400" />
@@ -316,7 +310,7 @@ export default function DevelopmentFundPage() {
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <PiggyBank className="w-3 h-3" /> Total Fund (30%)
                 </p>
-                <p className="font-[family-name:var(--font-space)] text-xl text-blue-400">
+                <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-blue-400">
                   ₹{filteredStats.allocated.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
@@ -330,7 +324,7 @@ export default function DevelopmentFundPage() {
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Package className="w-3 h-3" /> Total Spent
                 </p>
-                <p className="font-[family-name:var(--font-space)] text-xl text-amber-400">
+                <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-amber-400">
                   ₹{filteredStats.spent.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
@@ -344,7 +338,7 @@ export default function DevelopmentFundPage() {
                 <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Available Balance
                 </p>
-                <p className="font-[family-name:var(--font-space)] text-xl text-green-400">
+                <p className="font-[family-name:var(--font-space)] text-lg sm:text-xl text-green-400">
                   ₹{filteredStats.balance.toLocaleString()}
                 </p>
                 <p className="text-[10px] text-[var(--text-muted)] mt-1 opacity-70">
@@ -462,7 +456,7 @@ export default function DevelopmentFundPage() {
                               {expense.dateAdded}
                             </p>
                           </div>
-                          <p className="font-[family-name:var(--font-space)] text-lg text-amber-400 ml-4">
+                          <p className="font-[family-name:var(--font-space)] text-base sm:text-lg text-amber-400 ml-4">
                             -₹{expense.amount.toLocaleString()}
                           </p>
                         </div>
