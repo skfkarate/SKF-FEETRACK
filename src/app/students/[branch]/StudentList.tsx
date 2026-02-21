@@ -99,6 +99,7 @@ export default function StudentList({ branch }: { branch: string }) {
     null,
   );
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressActive = useRef(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   // Break/Discontinued confirmation state
@@ -183,7 +184,8 @@ export default function StudentList({ branch }: { branch: string }) {
     };
   }, [students]);
 
-  const handleMarkPaidClick = async (student: Student) => {
+  const handleMarkPaidClick = async (e: React.MouseEvent, student: Student) => {
+    e.stopPropagation();
     setConfirmStudent(student);
     setStudentCredits(null);
     setSelectedCreditId(null);
@@ -238,10 +240,12 @@ export default function StudentList({ branch }: { branch: string }) {
 
   // Long-press handlers
   const handleLongPressStart = (student: Student) => {
+    isLongPressActive.current = false;
     longPressTimerRef.current = setTimeout(() => {
+      isLongPressActive.current = true;
       setLongPressStudent(student);
       setShowStatusMenu(true);
-    }, 3000); // 3 seconds
+    }, 600); // 600ms is standard for long press
   };
 
   const handleLongPressEnd = () => {
@@ -249,6 +253,9 @@ export default function StudentList({ branch }: { branch: string }) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    setTimeout(() => {
+      isLongPressActive.current = false;
+    }, 100);
   };
 
   const handleBreakClick = () => {
@@ -577,14 +584,23 @@ export default function StudentList({ branch }: { branch: string }) {
                 return (
                   <div
                     key={student.id}
-                    onClick={() => setDetailStudent(student)}
-                    className={`glass-card p-4 transition-all duration-200 animate-slide-up hover:border-white/10 group cursor-pointer ${isDiscontinued
+                    onClick={() => {
+                      if (isLongPressActive.current) return;
+                      setDetailStudent(student);
+                    }}
+                    onMouseDown={() => handleLongPressStart(student)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
+                    onTouchStart={() => handleLongPressStart(student)}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchMove={handleLongPressEnd}
+                    className={`glass-card p-4 transition-all duration-200 animate-slide-up hover:border-white/10 group cursor-pointer select-none ${isDiscontinued
                       ? "opacity-40 grayscale"
                       : isBreak
                         ? "opacity-60"
                         : ""
                       }`}
-                    style={{ animationDelay: `${Math.min(index * 30, 300)}ms`, animationFillMode: "backwards" }}
+                    style={{ animationDelay: `${Math.min(index * 30, 300)}ms`, animationFillMode: "backwards", WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -638,7 +654,10 @@ export default function StudentList({ branch }: { branch: string }) {
                       <div className="flex-shrink-0">
                         {student.monthStatus === "Paid" ? (
                           <button
-                            onClick={() => setReceiptStudent(student)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReceiptStudent(student);
+                            }}
                             className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center hover:bg-green-400 transition-all shadow-md shadow-green-900/40"
                             title="View Receipt"
                           >
@@ -652,12 +671,7 @@ export default function StudentList({ branch }: { branch: string }) {
                           </div>
                         ) : (
                           <button
-                            onClick={() => handleMarkPaidClick(student)}
-                            onMouseDown={() => handleLongPressStart(student)}
-                            onMouseUp={handleLongPressEnd}
-                            onMouseLeave={handleLongPressEnd}
-                            onTouchStart={() => handleLongPressStart(student)}
-                            onTouchEnd={handleLongPressEnd}
+                            onClick={(e) => handleMarkPaidClick(e, student)}
                             disabled={
                               markingPaid === student.id ||
                               markingStatus === student.id

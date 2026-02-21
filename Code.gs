@@ -1416,7 +1416,7 @@ function getDevelopmentFundDataUnified() {
   // Calculate totals
   const totalContributions = monthlyData.reduce((sum, m) => sum + m.devFund, 0);
   const totalSpent = monthlyData.reduce((sum, m) => sum + m.spent, 0);
-  const availableBalance = totalContributions - totalSpent;
+  let availableBalance = totalContributions - totalSpent;
 
   // 6. Apply Reserve Fund Logic (Patch Deficit)
   let reserveUsed = 0;
