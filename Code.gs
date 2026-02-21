@@ -1892,12 +1892,46 @@ function getUpcomingBirthdays() {
         // Only notify for Active students
         if (status !== 'Active') continue;
         
-        const rawDOB = data[i][7];
-        // Ensure it's a date object
-        if (!rawDOB || !(rawDOB instanceof Date)) continue;
+        let rawDOB = data[i][7];
         
-        const birthMonth = rawDOB.getMonth();
-        const birthDate = rawDOB.getDate();
+        if (!rawDOB) continue;
+        
+        let birthMonth, birthDate, dobYear;
+
+        // Ensure it's a date object or parseable string
+        if (rawDOB instanceof Date) {
+            birthMonth = rawDOB.getMonth();
+            birthDate = rawDOB.getDate();
+            dobYear = rawDOB.getFullYear();
+        } else {
+            const dateStr = String(rawDOB).trim();
+            const parsedDate = new Date(dateStr);
+            if (!isNaN(parsedDate.getTime())) {
+                birthMonth = parsedDate.getMonth();
+                birthDate = parsedDate.getDate();
+                dobYear = parsedDate.getFullYear();
+                rawDOB = parsedDate; // ensure it's a Date for toISOString later
+            } else {
+                // Try parsing DD/MM/YYYY or DD-MM-YYYY
+                const parts = dateStr.split(/[-/]/);
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const y = parseInt(parts[2], 10);
+                    const tempDate = new Date(y, m, d);
+                    if (!isNaN(tempDate.getTime())) {
+                        birthMonth = tempDate.getMonth();
+                        birthDate = tempDate.getDate();
+                        dobYear = tempDate.getFullYear();
+                        rawDOB = tempDate;
+                    } else {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+            }
+        }
         
         // Calculate next birthday
         const currentYear = today.getFullYear();
@@ -1909,20 +1943,23 @@ function getUpcomingBirthdays() {
         }
         
         // Calculate diff in days
-        const diffTime = nextBday - todayMid;
+        const diffTime = nextBday.getTime() - todayMid.getTime();
         const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); 
         
         // Check availability (within next 7 days)
         if (diffDays >= 0 && diffDays <= 7) {
+            // Check if month is implemented manually to avoid timezone issues
+            const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
             results.push({
-                name: data[i][1],
+                name: String(data[i][1]),
                 branch: branch,
                 id: studentId,
                 date: nextBday.toISOString(),
                 originalDate: rawDOB.toISOString(),
                 day: birthDate,
-                month: nextBday.toLocaleString('en-US', { month: 'short' }),
-                turningAge: nextBday.getFullYear() - rawDOB.getFullYear(),
+                month: shortMonths[birthMonth],
+                turningAge: nextBday.getFullYear() - dobYear,
                 daysUntil: diffDays
             });
         }
