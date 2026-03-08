@@ -1,7 +1,7 @@
 "use client";
 
 import { Student } from "@/lib/api";
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState } from "react";
 import NextImage from "next/image";
 const BASE_PATH = "https://skfkarate.github.io/SKF-FEETRACK"; // Hardcoded absolute URL
 
@@ -34,6 +34,17 @@ export default function MonthlyFeeReceipt({
   onClose,
 }: MonthlyFeeReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [receiptDate, setReceiptDate] = useState<Date | null>(null);
+
+  // Date picker form state (defaults to now)
+  const now = new Date();
+  const [pickerDate, setPickerDate] = useState(
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  );
+  const [pickerTime, setPickerTime] = useState(
+    `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+  );
 
   const branchName =
     branch === "MPSC" ? "MP Sports Club" : branch?.toUpperCase();
@@ -41,10 +52,13 @@ export default function MonthlyFeeReceipt({
   // eslint-disable-next-line react-hooks/purity -- receipt ID needs a unique suffix per mount
   const receiptSuffix = useMemo(() => Math.floor(Math.random() * 10000).toString().padStart(4, '0'), []);
 
+  // Use receiptDate if set, else current date
+  const displayDate = receiptDate || new Date();
+
   const { receiptNo, date, purpose, amountWords } = useMemo(() => {
     return {
       receiptNo: `SKF-${branch.substring(0, 1).toUpperCase()}-${receiptSuffix}`,
-      date: new Date().toLocaleDateString("en-IN", {
+      date: displayDate.toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "long",
         year: "numeric",
@@ -54,10 +68,61 @@ export default function MonthlyFeeReceipt({
       })} Monthly Training Fee`,
       amountWords: `Rupees ${student.fee.toLocaleString()} Only`,
     };
-  }, [branch, month, student.fee, receiptSuffix]);
+  }, [branch, month, student.fee, receiptSuffix, displayDate]);
+
+  // Format time for display
+  const timeStr = displayDate.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  // Handle download click — show date picker first time
+  const handleDownloadClick = () => {
+    if (!receiptDate) {
+      // First download — ask for date/time
+      setShowDatePicker(true);
+    } else {
+      // Date already confirmed — download directly
+      executeDownload();
+    }
+  };
+
+  // Confirm date and download
+  const confirmDateAndDownload = () => {
+    const [year, mon, day] = pickerDate.split("-").map(Number);
+    const [hours, minutes] = pickerTime.split(":").map(Number);
+    const chosen = new Date(year, mon - 1, day, hours, minutes);
+    setReceiptDate(chosen);
+    setShowDatePicker(false);
+
+    // Small delay to let state update before download
+    setTimeout(() => {
+      executeDownloadWithDate(chosen);
+    }, 100);
+  };
+
+  const executeDownloadWithDate = (dateToUse: Date) => {
+    const formattedDate = dateToUse.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+    const formattedTime = dateToUse.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    generateReceipt(formattedDate, formattedTime);
+  };
+
+  const executeDownload = () => {
+    executeDownloadWithDate(displayDate);
+  };
 
   // Use browser's native print for PERFECT visual match
-  const downloadReceipt = () => {
+  const generateReceipt = (formattedDate: string, formattedTime: string) => {
     const printWindow = window.open("", "_blank", "width=600,height=800");
     if (!printWindow) {
       alert("Please allow popups to download the receipt.");
@@ -298,7 +363,11 @@ export default function MonthlyFeeReceipt({
       </div>
       <div class="row">
         <span class="label">Date</span>
-        <span class="value">${date}</span>
+        <span class="value">${formattedDate}</span>
+      </div>
+      <div class="row">
+        <span class="label">Time</span>
+        <span class="value">${formattedTime}</span>
       </div>
     </div>
     
@@ -511,6 +580,31 @@ export default function MonthlyFeeReceipt({
                     {date}
                   </td>
                 </tr>
+                <tr>
+                  <td
+                    style={{
+                      color: "#4b5563",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      padding: "4px 0",
+                    }}
+                  >
+                    Time
+                  </td>
+                  <td
+                    style={{
+                      color: "#1a1f2e",
+                      fontWeight: 700,
+                      fontSize: "14px",
+                      textAlign: "right",
+                      padding: "4px 0",
+                    }}
+                  >
+                    {timeStr}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -701,13 +795,80 @@ export default function MonthlyFeeReceipt({
             CLOSE
           </button>
           <button
-            onClick={downloadReceipt}
+            onClick={handleDownloadClick}
             className="btn-primary flex-1 font-[family-name:var(--font-space)] tracking-wider flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 border-none text-white"
           >
             ⬇ DOWNLOAD
           </button>
         </div>
       </div>
+
+      {/* Date/Time Picker Modal */}
+      {showDatePicker && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          onClick={() => setShowDatePicker(false)}
+        >
+          <div
+            className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-[0_0_40px_rgba(34,197,94,0.15)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h3 className="font-[family-name:var(--font-space)] text-lg font-bold text-white tracking-wider">
+                RECEIPT DATE & TIME
+              </h3>
+              <p className="text-white/40 text-xs mt-1">
+                Set the payment date & time for this receipt
+              </p>
+            </div>
+
+            {/* Date Input */}
+            <div className="mb-4">
+              <label className="text-white/50 text-[10px] uppercase tracking-wider font-bold block mb-2">
+                Payment Date
+              </label>
+              <input
+                type="date"
+                value={pickerDate}
+                onChange={(e) => setPickerDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all"
+                style={{ colorScheme: "dark" }}
+              />
+            </div>
+
+            {/* Time Input */}
+            <div className="mb-6">
+              <label className="text-white/50 text-[10px] uppercase tracking-wider font-bold block mb-2">
+                Payment Time
+              </label>
+              <input
+                type="time"
+                value={pickerTime}
+                onChange={(e) => setPickerTime(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all"
+                style={{ colorScheme: "dark" }}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDatePicker(false)}
+                className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm font-[family-name:var(--font-space)] tracking-wider transition-all border border-white/5 hover:border-white/10"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={confirmDateAndDownload}
+                className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-[family-name:var(--font-space)] tracking-wider transition-all font-bold shadow-lg shadow-green-900/30"
+              >
+                ✓ CONFIRM & DOWNLOAD
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

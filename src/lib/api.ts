@@ -414,6 +414,31 @@ export async function getUpcomingBirthdays(): Promise<BirthdayStudent[]> {
   return data.data;
 }
 
+export interface SpecialDay {
+  name: string;
+  date: string;
+  day: number;
+  month: string;
+  category: string;
+  notes: string;
+  daysUntil: number;
+}
+
+export async function getUpcomingSpecialDays(): Promise<SpecialDay[]> {
+  if (isMockData()) {
+    await new Promise((r) => setTimeout(r, 300));
+    return [];
+  }
+
+  const response = await fetchWithRetry(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "get_upcoming_special_days" }),
+  });
+  const data = await response.json();
+  if (!data.success) throw new Error(data.error || "Failed to fetch special days");
+  return data.data;
+}
+
 export async function getDashboardStats(
   branch: string,
   month: number,

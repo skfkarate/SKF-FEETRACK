@@ -37,6 +37,7 @@ export const viewport = {
 };
 
 import BirthdayWidget from "@/components/common/BirthdayWidget";
+import SpecialDaysWidget from "@/components/common/SpecialDaysWidget";
 
 export default function RootLayout({
   children,
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body className={`${manrope.variable} ${spaceGrotesk.variable} antialiased`}>
         {children}
         <BirthdayWidget />
+        <SpecialDaysWidget />
       </body>
     </html>
   );

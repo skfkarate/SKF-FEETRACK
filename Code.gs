@@ -130,6 +130,44 @@ function setupAllSheets() {
     "Used_Date",
   ]);
 
+  // Create SpecialDays sheet for poster reminders
+  createSheetIfNotExists(ss, "SpecialDays", [
+    "Event_Name",
+    "Date",
+    "Category",
+    "Notes",
+  ]);
+
+  // Pre-fill SpecialDays with common events if empty
+  const specialSheet = ss.getSheetByName("SpecialDays");
+  if (specialSheet && specialSheet.getLastRow() <= 1) {
+    const events = [
+      ["New Year", "01-Jan", "Celebration", "Happy New Year poster"],
+      ["Republic Day", "26-Jan", "National", "National flag / patriotic poster"],
+      ["Women's Day", "08-Mar", "Awareness", "Women empowerment poster"],
+      ["Ugadi", "29-Mar", "Festival", "Telugu/Kannada New Year"],
+      ["Ramadan Begins", "01-Mar", "Festival", "Greetings poster"],
+      ["Ambedkar Jayanti", "14-Apr", "National", ""],
+      ["Eid ul-Fitr", "31-Mar", "Festival", "Eid greetings poster"],
+      ["May Day", "01-May", "Awareness", "Labour Day"],
+      ["International Yoga Day", "21-Jun", "Sports", "Yoga & fitness poster"],
+      ["Eid ul-Adha", "07-Jun", "Festival", "Bakrid greetings"],
+      ["Independence Day", "15-Aug", "National", "Tricolor / patriotic poster"],
+      ["Janmashtami", "25-Aug", "Festival", "Krishna Jayanti"],
+      ["National Sports Day", "29-Aug", "Sports", "Dhyan Chand tribute & sports poster"],
+      ["Teachers' Day", "05-Sep", "Awareness", "Guru tribute poster"],
+      ["Ganesh Chaturthi", "07-Sep", "Festival", "Ganpati poster"],
+      ["Gandhi Jayanti", "02-Oct", "National", "Mahatma Gandhi tribute"],
+      ["Dasara / Dussehra", "12-Oct", "Festival", "Victory of good poster"],
+      ["World Karate Day", "25-Oct", "Sports", "Karate poster — MUST DO!"],
+      ["Diwali", "01-Nov", "Festival", "Festival of lights poster"],
+      ["Children's Day", "14-Nov", "Awareness", "Chacha Nehru / kids poster"],
+      ["Guru Nanak Jayanti", "15-Nov", "Festival", ""],
+      ["Christmas", "25-Dec", "Festival", "Christmas greetings poster"],
+    ];
+    specialSheet.getRange(2, 1, events.length, 4).setValues(events);
+  }
+
   // Sheets created - ready for real data
   try {
     SpreadsheetApp.getUi().alert(
@@ -175,6 +213,7 @@ const CONFIG = {
   devFundSheet: "DevFund", // Unified sheet
   defaultReferralCredit: 500, // Default referral bonus amount
   reserveCap: 30000, // Reserve fund — only shown in Overall view
+  notificationEmails: ["krishnacgowda10@gmail.com", "ushacgowda02@gmail.com"], // Recipients for reminders (sent FROM the script owner's account, e.g. skfkaratee@gmail.com)
   branches: {
     Herohalli: {
       db: "DB_Herohalli",
@@ -377,6 +416,11 @@ function doPost(e) {
       // Birthday Actions
       case "get_upcoming_birthdays":
         result = getUpcomingBirthdays();
+        break;
+
+      // Special Days / Poster Reminders
+      case "get_upcoming_special_days":
+        result = getUpcomingSpecialDays();
         break;
       
       // Debug - show raw fees data structure
@@ -1079,7 +1123,7 @@ function getFinancialSummary(branch, month) {
 
   for (let m = 0; m < 12; m++) {
       const s = monthlyStats[m];
-      const netForBank = s.revenue - s.devFund;
+      const netForBank = s.revenue - s.devFund - s.expenses;
       
       runRevenue += s.revenue;
       runBank += netForBank; 
@@ -1129,9 +1173,9 @@ function getFinancialSummary(branch, month) {
       devFundBalance += reserveUsed;
   }
 
-  // Branch view: show EXACT money (collected − credits). No reserve added here.
+  // Branch view: show EXACT money (collected − credits − dev expenses). No reserve added here.
   const totalExpected = totalCollected + totalPending;
-  const totalActualReceived = totalCollected - creditsApplied;
+  const totalActualReceived = totalCollected - creditsApplied - devFundSpent;
   
   return {
     month: month,
@@ -1972,52 +2016,176 @@ function getUpcomingBirthdays() {
 }
 
 function checkBirthdaysAndNotify() {
+  // === PART 1: Birthday Reminders ===
   const upcoming = getUpcomingBirthdays();
-  // Filter for: 7 days, 2 days, 0 days
-  const notifyList = upcoming.filter(s => s.daysUntil === 7 || s.daysUntil === 2 || s.daysUntil === 0);
+  // Notify at 2 days before and 1 day before (and today)
+  const birthdayNotifyList = upcoming.filter(s => s.daysUntil === 2 || s.daysUntil === 1 || s.daysUntil === 0);
   
-  if (notifyList.length === 0) return;
+  // === PART 2: Special Days / Poster Reminders ===
+  const specialDays = getUpcomingSpecialDays();
+  // Notify at 2 days before and 1 day before (and today)
+  const specialNotifyList = specialDays.filter(s => s.daysUntil === 2 || s.daysUntil === 1 || s.daysUntil === 0);
   
-  // Send email to the effective user (script owner/runner)
-  const recipient = Session.getActiveUser().getEmail();
+  // If nothing to notify, exit
+  if (birthdayNotifyList.length === 0 && specialNotifyList.length === 0) return;
   
-  if (!recipient) {
-    Logger.log("No recipient email found.");
-    return;
+  // Build clean, minimal email
+  let subject = "SKF Reminder";
+  let body = "";
+  
+  if (birthdayNotifyList.length > 0) {
+    subject += " — " + birthdayNotifyList.length + " Birthday(s)";
+    body += "Birthdays:\n";
+    birthdayNotifyList.forEach(s => {
+        const when = s.daysUntil === 0 ? "Today" : s.daysUntil === 1 ? "Tomorrow" : "In " + s.daysUntil + " days";
+        body += "- " + s.name + " (" + s.branch + ") — " + when + ", turning " + s.turningAge + "\n";
+    });
+    body += "\n";
   }
   
-  let subject = `🎂 Upcoming Birthdays Alert - ${notifyList.length} Student(s)`;
-  let body = "Upcoming Student Birthdays:\n\n";
+  if (specialNotifyList.length > 0) {
+    subject += " — " + specialNotifyList.length + " Poster(s)";
+    body += "Poster Reminders:\n";
+    specialNotifyList.forEach(s => {
+        const when = s.daysUntil === 0 ? "Today" : s.daysUntil === 1 ? "Tomorrow" : "In " + s.daysUntil + " days";
+        body += "- " + s.name + " — " + when + (s.notes ? " (" + s.notes + ")" : "") + "\n";
+    });
+    body += "\n";
+  }
   
-  notifyList.forEach(s => {
-      let timeline = "";
-      if (s.daysUntil === 0) timeline = "TODAY! 🎉";
-      else if (s.daysUntil === 1) timeline = "Tomorrow";
-      else timeline = `in ${s.daysUntil} days`;
-      
-      body += `• ${s.name} (${s.branch}) - ${timeline} (Turning ${s.turningAge})\n`;
+  body += "— SKF Karate";
+  
+  // Send to configured emails
+  const recipients = CONFIG.notificationEmails || [];
+  
+  // Also try script owner as fallback
+  const ownerEmail = Session.getActiveUser().getEmail();
+  if (ownerEmail && !recipients.includes(ownerEmail)) {
+    recipients.push(ownerEmail);
+  }
+  
+  recipients.forEach(email => {
+    if (email) {
+      try {
+        MailApp.sendEmail(email, subject, body);
+      } catch (e) {
+        Logger.log("Failed to send to " + email + ": " + e.message);
+      }
+    }
   });
-  
-  body += "\nSKF Feetracker System";
-  
-  MailApp.sendEmail(recipient, subject, body);
 }
 
-function setupBirthdayTrigger() {
-  // Delete existing triggers to avoid duplicates
+// ============================================
+// SPECIAL DAYS FUNCTIONS
+// ============================================
+
+/**
+ * Get upcoming special days from the SpecialDays sheet
+ * Returns events within the next 3 days (catches 2-day, 1-day, and today)
+ */
+function getUpcomingSpecialDays() {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName("SpecialDays");
+  
+  if (!sheet || sheet.getLastRow() <= 1) return [];
+  
+  const data = sheet.getDataRange().getValues();
+  const today = new Date();
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const currentYear = today.getFullYear();
+  
+  const results = [];
+  
+  // Header: Event_Name, Date, Category, Notes
+  for (let i = 1; i < data.length; i++) {
+    const eventName = String(data[i][0]).trim();
+    if (!eventName) continue;
+    
+    const rawDate = data[i][1];
+    const category = String(data[i][2] || "").trim();
+    const notes = String(data[i][3] || "").trim();
+    
+    let eventMonth, eventDay;
+    
+    if (rawDate instanceof Date) {
+      eventMonth = rawDate.getMonth();
+      eventDay = rawDate.getDate();
+    } else {
+      const dateStr = String(rawDate).trim();
+      
+      // Try parsing "DD-Mon" format (e.g., "08-Mar", "25-Oct")
+      const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const ddMonMatch = dateStr.match(/^(\d{1,2})[-\s]?(\w{3})$/i);
+      
+      if (ddMonMatch) {
+        eventDay = parseInt(ddMonMatch[1], 10);
+        const monIdx = shortMonths.findIndex(m => m.toLowerCase() === ddMonMatch[2].toLowerCase());
+        if (monIdx === -1) continue;
+        eventMonth = monIdx;
+      } else {
+        // Try as a full date
+        const parsed = new Date(dateStr);
+        if (isNaN(parsed.getTime())) continue;
+        eventMonth = parsed.getMonth();
+        eventDay = parsed.getDate();
+      }
+    }
+    
+    // Build this year's event date
+    let eventDate = new Date(currentYear, eventMonth, eventDay);
+    
+    // If already passed, check next year
+    if (eventDate < todayMid) {
+      eventDate = new Date(currentYear + 1, eventMonth, eventDay);
+    }
+    
+    // Calculate days until
+    const diffTime = eventDate.getTime() - todayMid.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Show events within next 3 days (catches 2-day, 1-day, today)
+    if (diffDays >= 0 && diffDays <= 3) {
+      const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      results.push({
+        name: eventName,
+        date: eventDate.toISOString(),
+        day: eventDay,
+        month: shortMonths[eventMonth],
+        category: category,
+        notes: notes,
+        daysUntil: diffDays
+      });
+    }
+  }
+  
+  // Sort by closest first
+  results.sort((a, b) => a.daysUntil - b.daysUntil);
+  return results;
+}
+
+function setupAllReminders() {
+  // Delete ALL existing reminder triggers
   const triggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === "checkBirthdaysAndNotify") {
+    const handler = triggers[i].getHandlerFunction();
+    if (handler === "checkBirthdaysAndNotify" || handler === "checkSpecialDaysAndNotify") {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
   
-  // Create new daily trigger at 8 AM
+  // Create single unified daily trigger at 8 AM
   ScriptApp.newTrigger("checkBirthdaysAndNotify")
     .timeBased()
     .everyDays(1)
     .atHour(8)
     .create();
     
-  return "Birthday notification trigger setup complete (Daily at 8 AM).";
+  return "✅ Unified reminder trigger setup complete (Daily at 8 AM). Covers birthdays + special days. Sends to: " + CONFIG.notificationEmails.join(", ");
 }
+
+// Keep old function name as alias for backwards compatibility
+function setupBirthdayTrigger() {
+  return setupAllReminders();
+}
+

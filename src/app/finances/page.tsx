@@ -266,6 +266,8 @@ export default function FinancesPage() {
                     <span>Collected (₹{data?.collected?.toLocaleString() ?? 0})</span>
                     <span>−</span>
                     <span>Credits (₹{data?.creditsApplied?.toLocaleString() ?? 0})</span>
+                    <span>−</span>
+                    <span className="text-red-400">Dev Expenses (₹{data?.devFundSpent?.toLocaleString() ?? 0})</span>
                     {data?.reserveUsed && data.reserveUsed > 0 && branch === "Overall" ? (
                       <>
                         <span>+</span>
